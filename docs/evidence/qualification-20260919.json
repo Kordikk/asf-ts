@@ -1,0 +1,395 @@
+{
+  "schema": "asf-qualification/v1",
+  "capturedAt": "2026-09-19T06:23:10.943452+00:00",
+  "baseCommit": "7d10300a2dbba7427dff21c6e6156a52be5a3e4b",
+  "phase": "pre-independent-review working tree",
+  "limits": {
+    "maxDispatchReservations": 20,
+    "softEstimatedUsd": 10
+  },
+  "consumedReservations": 7,
+  "knownRecordedEstimateUsd": 0.196624,
+  "unresolvedLedgerRecords": 2,
+  "billingClaim": "API-rate estimates only; incomplete records are not treated as free by the ledger",
+  "codex": {
+    "cli": "0.154.0",
+    "sdk": "0.154.0",
+    "model": "gpt-6-astra",
+    "successfulTurns": 5,
+    "fileWriteVerified": true,
+    "replayNewDispatches": 0,
+    "replayedActions": 5
+  },
+  "opencode": {
+    "cli": "0.0.0-beta-18684",
+    "client": "0.0.0-beta-18684",
+    "model": "opencode/big-pickle",
+    "successfulTurns": 0,
+    "outcome": "blocked by provider.auth HTTP 403; no restriction bypass or model fallback attempted",
+    "providerFailureEvidence": [
+      {
+        "type": "session.step.failed",
+        "error": {
+          "type": "provider.auth",
+          "message": "Error from provider (Console): OpenCode's free tier can only be used from within OpenCode",
+          "status": 403
+        }
+      },
+      {
+        "type": "session.execution.failed",
+        "error": {
+          "type": "provider.auth",
+          "message": "Error from provider (Console): OpenCode's free tier can only be used from within OpenCode",
+          "status": 403
+        }
+      }
+    ]
+  },
+  "allowanceAudit": {
+    "approvedMaxDispatchReservations": 20,
+    "approvedEstimatedUsdThreshold": 10,
+    "database": ".asf/qualification.db",
+    "serialExecutionOnly": true,
+    "segments": [
+      {
+        "budgetId": "parent-qualification-v1",
+        "runId": "qualify-codex-1",
+        "consumedReservations": 1,
+        "closedForFurtherQualification": true,
+        "accountingRecordPreserved": "incomplete, immutable; no modification or deletion",
+        "operatorAssessment": "known local configuration failure before any model dispatch",
+        "assessedModelCostUsd": 0,
+        "evidence": "Native Codex 0.154 error loading config.toml rejects reserved model_providers.openai. Pinned exec source validates this configuration before creating the model turn; test/codex-config.test.ts reproduces rejection through no-model initialization as a negative control."
+      },
+      {
+        "budgetId": "parent-qualification-remaining-19",
+        "maxDispatchReservations": 19,
+        "softUsd": 10,
+        "reason": "Remaining original allowance after one proven local pre-send failure; not a reset or extra allowance. Parent checks aggregate invocation count across both segments before any further live run."
+      }
+    ]
+  },
+  "invocations": [
+    {
+      "run": "qualify-codex-1",
+      "action": "read-tool",
+      "turn": 0,
+      "status": "failed",
+      "nativeSessionFingerprint": null,
+      "syntheticFinalText": "",
+      "accounting": {
+        "usd": null,
+        "kind": "asf-calculated",
+        "model": "gpt-6-astra",
+        "modelSource": "requested",
+        "scope": "unknown",
+        "excluded": [],
+        "source": "unavailable",
+        "version": "1",
+        "tokens": null,
+        "pricing": null,
+        "status": "incomplete",
+        "reason": "Codex Exec exited with code 1: Error loading config.toml: model_providers contains reserved built-in provider IDs: `openai`. Built-in providers cannot be overridden. Rename your custom provider (for example, `openai-custom`).\nin `model_providers`\n\n"
+      },
+      "error": "Codex Exec exited with code 1: Error loading config.toml: model_providers contains reserved built-in provider IDs: `openai`. Built-in providers cannot be overridden. Rename your custom provider (for example, `openai-custom`).\nin `model_providers`\n\n",
+      "toolEventTypes": [],
+      "contentEventsBeforeReceipt": 0
+    },
+    {
+      "run": "qualify-codex-2",
+      "action": "read-tool",
+      "turn": 0,
+      "status": "succeeded",
+      "nativeSessionFingerprint": "5550a03c8332f9775e78d90104e77f208ccf1373071da6c1908fca0887618054",
+      "syntheticFinalText": "qualification-marker-742",
+      "accounting": {
+        "status": "complete",
+        "usd": 0.052698,
+        "kind": "asf-calculated",
+        "model": "gpt-6-astra",
+        "modelSource": "requested",
+        "scope": "primary-thread reported cumulative-token delta at requested model rates",
+        "excluded": [
+          "actual model/reroutes not exposed by exec SDK",
+          "unreported subagents/provider-internal requests",
+          "invoice/subscription spend"
+        ],
+        "source": "codex turn.completed.usage",
+        "version": "0.154.0",
+        "tokens": {
+          "input": 2796,
+          "cacheRead": 21888,
+          "cacheWrite": 0,
+          "output": 57,
+          "reasoning": 0
+        },
+        "pricing": {
+          "model": "gpt-6-astra",
+          "source": "https://developers.openai.com/api/docs/pricing \u2014 standard short-context list rates; hypothetical API-rate estimate, not subscription billing",
+          "version": "retrieved-2026-09-19",
+          "input": 10,
+          "cacheRead": 1,
+          "cacheWrite": 12.5,
+          "output": 50
+        },
+        "raw": {
+          "input_tokens": 24684,
+          "cached_input_tokens": 21888,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 57,
+          "reasoning_output_tokens": 0
+        }
+      },
+      "error": null,
+      "toolEventTypes": ["command_execution", "command_execution"],
+      "contentEventsBeforeReceipt": 4
+    },
+    {
+      "run": "qualify-codex-2",
+      "action": "continuation",
+      "turn": 0,
+      "status": "succeeded",
+      "nativeSessionFingerprint": "5550a03c8332f9775e78d90104e77f208ccf1373071da6c1908fca0887618054",
+      "syntheticFinalText": "qualification-marker-742",
+      "accounting": {
+        "status": "complete",
+        "usd": 0.02076,
+        "kind": "asf-calculated",
+        "model": "gpt-6-astra",
+        "modelSource": "requested",
+        "scope": "primary-thread reported cumulative-token delta at requested model rates",
+        "excluded": [
+          "actual model/reroutes not exposed by exec SDK",
+          "unreported subagents/provider-internal requests",
+          "invoice/subscription spend"
+        ],
+        "source": "codex turn.completed.usage",
+        "version": "0.154.0",
+        "tokens": {
+          "input": 820,
+          "cacheRead": 12160,
+          "cacheWrite": 0,
+          "output": 8,
+          "reasoning": 0
+        },
+        "pricing": {
+          "model": "gpt-6-astra",
+          "source": "https://developers.openai.com/api/docs/pricing \u2014 standard short-context list rates; hypothetical API-rate estimate, not subscription billing",
+          "version": "retrieved-2026-09-19",
+          "input": 10,
+          "cacheRead": 1,
+          "cacheWrite": 12.5,
+          "output": 50
+        },
+        "raw": {
+          "input_tokens": 37664,
+          "cached_input_tokens": 34048,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 65,
+          "reasoning_output_tokens": 0
+        }
+      },
+      "error": null,
+      "toolEventTypes": [],
+      "contentEventsBeforeReceipt": 1
+    },
+    {
+      "run": "qualify-codex-2",
+      "action": "write",
+      "turn": 0,
+      "status": "succeeded",
+      "nativeSessionFingerprint": "dd8d268c2d38f23c4ca29b3fe54cd00f14e9faf6ab02b1c08743d854892429ba",
+      "syntheticFinalText": "Wrote the exact contents of `fixture.txt` into `result.txt`.",
+      "accounting": {
+        "status": "complete",
+        "usd": 0.073706,
+        "kind": "asf-calculated",
+        "model": "gpt-6-astra",
+        "modelSource": "requested",
+        "scope": "primary-thread reported cumulative-token delta at requested model rates",
+        "excluded": [
+          "actual model/reroutes not exposed by exec SDK",
+          "unreported subagents/provider-internal requests",
+          "invoice/subscription spend"
+        ],
+        "source": "codex turn.completed.usage",
+        "version": "0.154.0",
+        "tokens": {
+          "input": 3318,
+          "cacheRead": 34176,
+          "cacheWrite": 0,
+          "output": 127,
+          "reasoning": 0
+        },
+        "pricing": {
+          "model": "gpt-6-astra",
+          "source": "https://developers.openai.com/api/docs/pricing \u2014 standard short-context list rates; hypothetical API-rate estimate, not subscription billing",
+          "version": "retrieved-2026-09-19",
+          "input": 10,
+          "cacheRead": 1,
+          "cacheWrite": 12.5,
+          "output": 50
+        },
+        "raw": {
+          "input_tokens": 37494,
+          "cached_input_tokens": 34176,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 127,
+          "reasoning_output_tokens": 0
+        }
+      },
+      "error": null,
+      "toolEventTypes": [
+        "command_execution",
+        "command_execution",
+        "file_change",
+        "file_change"
+      ],
+      "contentEventsBeforeReceipt": 6
+    },
+    {
+      "run": "qualify-codex-2",
+      "action": "format",
+      "turn": 0,
+      "status": "succeeded",
+      "nativeSessionFingerprint": "c671fff6528c16fc161087068a5d822e6f045a03eb3c41517ac1357cae9fc96d",
+      "syntheticFinalText": "NOT_JSON",
+      "accounting": {
+        "status": "complete",
+        "usd": 0.034708,
+        "kind": "asf-calculated",
+        "model": "gpt-6-astra",
+        "modelSource": "requested",
+        "scope": "primary-thread reported cumulative-token delta at requested model rates",
+        "excluded": [
+          "actual model/reroutes not exposed by exec SDK",
+          "unreported subagents/provider-internal requests",
+          "invoice/subscription spend"
+        ],
+        "source": "codex turn.completed.usage",
+        "version": "0.154.0",
+        "tokens": {
+          "input": 2468,
+          "cacheRead": 9728,
+          "cacheWrite": 0,
+          "output": 6,
+          "reasoning": 0
+        },
+        "pricing": {
+          "model": "gpt-6-astra",
+          "source": "https://developers.openai.com/api/docs/pricing \u2014 standard short-context list rates; hypothetical API-rate estimate, not subscription billing",
+          "version": "retrieved-2026-09-19",
+          "input": 10,
+          "cacheRead": 1,
+          "cacheWrite": 12.5,
+          "output": 50
+        },
+        "raw": {
+          "input_tokens": 12196,
+          "cached_input_tokens": 9728,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 6,
+          "reasoning_output_tokens": 0
+        }
+      },
+      "error": null,
+      "toolEventTypes": [],
+      "contentEventsBeforeReceipt": 1
+    },
+    {
+      "run": "qualify-codex-2",
+      "action": "format",
+      "turn": 1,
+      "status": "succeeded",
+      "nativeSessionFingerprint": "c671fff6528c16fc161087068a5d822e6f045a03eb3c41517ac1357cae9fc96d",
+      "syntheticFinalText": "{\"ok\":true}",
+      "accounting": {
+        "status": "complete",
+        "usd": 0.014752,
+        "kind": "asf-calculated",
+        "model": "gpt-6-astra",
+        "modelSource": "requested",
+        "scope": "primary-thread reported cumulative-token delta at requested model rates",
+        "excluded": [
+          "actual model/reroutes not exposed by exec SDK",
+          "unreported subagents/provider-internal requests",
+          "invoice/subscription spend"
+        ],
+        "source": "codex turn.completed.usage",
+        "version": "0.154.0",
+        "tokens": {
+          "input": 227,
+          "cacheRead": 12032,
+          "cacheWrite": 0,
+          "output": 9,
+          "reasoning": 0
+        },
+        "pricing": {
+          "model": "gpt-6-astra",
+          "source": "https://developers.openai.com/api/docs/pricing \u2014 standard short-context list rates; hypothetical API-rate estimate, not subscription billing",
+          "version": "retrieved-2026-09-19",
+          "input": 10,
+          "cacheRead": 1,
+          "cacheWrite": 12.5,
+          "output": 50
+        },
+        "raw": {
+          "input_tokens": 24455,
+          "cached_input_tokens": 21760,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 15,
+          "reasoning_output_tokens": 0
+        }
+      },
+      "error": null,
+      "toolEventTypes": [],
+      "contentEventsBeforeReceipt": 1
+    },
+    {
+      "run": "qualify-opencode-2",
+      "action": "read-tool",
+      "turn": 0,
+      "status": "failed",
+      "nativeSessionFingerprint": "cec50b685037d81bdc8da3fad4cbfb9b510c5e6c619612ea0c35cde6fd00ff32",
+      "syntheticFinalText": "",
+      "accounting": {
+        "usd": null,
+        "kind": "asf-calculated",
+        "model": "opencode/big-pickle",
+        "modelSource": "requested",
+        "scope": "unknown",
+        "excluded": [],
+        "source": "unavailable",
+        "version": "1",
+        "tokens": null,
+        "pricing": null,
+        "status": "incomplete",
+        "reason": "session.execution.failed"
+      },
+      "error": "session.execution.failed",
+      "toolEventTypes": [],
+      "contentEventsBeforeReceipt": 0
+    }
+  ],
+  "sourceSnapshotNote": "Hashes captured after live qualification and local error-diagnostic fixes, before independent review; not a claim that source was frozen at dispatch.",
+  "sourceSha256": {
+    "package-lock.json": "d9d0dfd1c16782cd30808269009b329210af4d0b545cab1cdb1b6cecc0ba6c94",
+    "package.json": "f30f3171629e6cd25238ddf1ce6dcb352745672ac1291c09cf90f59fea653a3d",
+    "scripts/codex-launcher.mjs": "d564f8ed84f51ef71661c9d252536e2548eca6d3beafd01034b882799ea03ea8",
+    "scripts/opencode-policy.mjs": "7f2ede6ed7572243c8dcf4fc1dc938797699869ec4ad822212e8563562061ee4",
+    "scripts/qualify.ts": "614930eaef5a4bef7f4ef43878ae38fe0ad0eb51ce1990628354d80259a7040d",
+    "src/accounting.ts": "4c0d17fd4561521a3a0912d1cad20e39146d370d000271284f4a4bdfda39e116",
+    "src/adapters/codex.ts": "e7b12d042d35f17fd4390eb2b18a2ed2c08602eef3d089c0467d2d140b32dba0",
+    "src/adapters/opencode-server.ts": "74e7da09e508b000f62a778c78425deb8d109df86d1e079a1c6c5def11f56841",
+    "src/adapters/opencode.ts": "299d7d45a1988940d150bf6d69e10235bd108258dcfd06c1449394bc67a5b79a",
+    "src/cli.ts": "4cf628b57287d703256eff47903d011a494fc3d94c3fe6de2120cb67f9f9ef8a",
+    "src/config.ts": "28e2eacf15727c6f8639c0ba74f13a2919436e53e5b4f8aecc7548f5f5f47a6a",
+    "src/http.ts": "10fd04aabc35d1af71659f0ba3c5b24558e12853c1e8fb4f0779c04f40f0c91c",
+    "src/index.ts": "9479d3070aec25d545f9b39ae584cabf54c9d2ef01b138a6ed3398f27ce5f026",
+    "src/process.ts": "e268d98afec8d341dbc58ed3d8a232a8b8be9e417b42f2ec71fd2473a64ae170",
+    "src/runtime.ts": "6c3b82bcc67759bac124f5e3e6964ee8ed65a54dbb9bc03b9929f931829cc6c5",
+    "src/store.ts": "1ba9cbcd568fcadb1020316313f18a972406ddc691d7f31cd6d6022662d000b0",
+    "src/types.ts": "a9430fc5b87d67aa43c9dce5c9f82d6f1d531c551ea461368ccce907e94ebcff",
+    "src/util.ts": "7bea9cf00fd365e50315a54f7c9cdd908cf8421dfd9ae613f0382af9e30cdf5a"
+  }
+}

@@ -1,0 +1,238 @@
+{
+  "date": "2026-09-22",
+  "kind": "authorized mixed-provider live qualification",
+  "versions": {
+    "codexCLIAndSDK": "0.154.0",
+    "opencodeCLIAndClient": "0.0.0-beta-18684"
+  },
+  "succeeded": true,
+  "runId": "mixed-codex-glm-20260922-v2",
+  "models": {
+    "codex": "gpt-6-astra",
+    "opencode": "opencode-go/glm-5.2"
+  },
+  "budget": {
+    "id": "mixed-codex-glm-approved-20260922-v2",
+    "maxDispatches": 3,
+    "softUsd": 2
+  },
+  "priorRowsUnchanged": true,
+  "outputs": {
+    "codex": {
+      "marker": "mixed-providers-942",
+      "subtotal": 49
+    },
+    "opencode": {
+      "marker": "mixed-providers-942",
+      "subtotal": 39
+    },
+    "combined": {
+      "marker": "mixed-providers-942",
+      "codexSubtotal": 49,
+      "opencodeSubtotal": 39,
+      "total": 88
+    }
+  },
+  "totals": {
+    "invocations": 3,
+    "modelDispatches": 3,
+    "knownUsd": 0.10295267999999999,
+    "unresolved": 0
+  },
+  "originalAllowance": {
+    "paid": 20,
+    "knownUsd": 1.34689895,
+    "unresolved": 3
+  },
+  "turns": [
+    {
+      "action": "codex/read",
+      "turn": 0,
+      "status": "received",
+      "accountingStatus": "complete",
+      "usd": 0.054818,
+      "kind": "asf-calculated",
+      "model": "gpt-6-astra",
+      "modelSource": "requested",
+      "tokens": {
+        "input": 2968,
+        "cacheRead": 21888,
+        "cacheWrite": 0,
+        "output": 65,
+        "reasoning": 0
+      },
+      "pricing": {
+        "model": "gpt-6-astra",
+        "source": "https://developers.openai.com/api/docs/models/gpt-6-astra — standard short-context rates, prompt billing tier changes above 272K input. Hypothetical requested-model API-rate estimate, not subscription billing. The 200K cumulative-input ceiling conservatively bounds every observed request below 272K.",
+        "version": "retrieved-2026-09-22",
+        "input": 10,
+        "cacheRead": 1,
+        "cacheWrite": 12.5,
+        "output": 50
+      },
+      "scope": "primary-thread reported cumulative-token delta at requested model rates",
+      "excluded": [
+        "structured actual-model attribution absent; textual reroutes fail closed",
+        "unreported subagents/provider-internal requests",
+        "invoice/subscription spend"
+      ],
+      "additional": [],
+      "sessionCorrelation": "39637302ec5f8586",
+      "nativeSessionCorrelation": "b7eaddfb688f78a9"
+    },
+    {
+      "action": "opencode/read",
+      "turn": 0,
+      "status": "received",
+      "accountingStatus": "complete",
+      "usd": 0.0021366799999999997,
+      "kind": "asf-calculated",
+      "model": "opencode-go/glm-5.2",
+      "modelSource": "observed",
+      "tokens": {
+        "input": 1002,
+        "cacheRead": 978,
+        "cacheWrite": 0,
+        "output": 109,
+        "reasoning": 57
+      },
+      "pricing": {
+        "model": "opencode-go/glm-5.2",
+        "source": "https://opencode.ai/docs/go/#usage-limits — GLM 5.2 USD per 1M tokens, Go usage-rate estimate not subscription invoice. No separately priced cache-write category (dash in published table, zero in exact native catalog); reject any positive native cache-write count. Qualification limits cumulative input per ASF invocation to 200K.",
+        "version": "retrieved-2026-09-22",
+        "input": 1.4,
+        "cacheRead": 0.26,
+        "cacheWrite": 0,
+        "output": 4.4
+      },
+      "scope": "exposed main-session inference tokens; explicit rates, not native catalog cost",
+      "excluded": [
+        "provider-internal requests and unreported token components",
+        "invoice/subscription spend"
+      ],
+      "additional": [],
+      "sessionCorrelation": "eda97431bf4c78de",
+      "nativeSessionCorrelation": "5c68c144c5d4eac5"
+    },
+    {
+      "action": "codex/combine",
+      "turn": 0,
+      "status": "received",
+      "accountingStatus": "complete",
+      "usd": 0.045998,
+      "kind": "asf-calculated",
+      "model": "gpt-6-astra",
+      "modelSource": "requested",
+      "tokens": {
+        "input": 3482,
+        "cacheRead": 9728,
+        "cacheWrite": 0,
+        "output": 29,
+        "reasoning": 0
+      },
+      "pricing": {
+        "model": "gpt-6-astra",
+        "source": "https://developers.openai.com/api/docs/models/gpt-6-astra — standard short-context rates, prompt billing tier changes above 272K input. Hypothetical requested-model API-rate estimate, not subscription billing. The 200K cumulative-input ceiling conservatively bounds every observed request below 272K.",
+        "version": "retrieved-2026-09-22",
+        "input": 10,
+        "cacheRead": 1,
+        "cacheWrite": 12.5,
+        "output": 50
+      },
+      "scope": "primary-thread reported cumulative-token delta at requested model rates",
+      "excluded": [
+        "structured actual-model attribution absent; textual reroutes fail closed",
+        "unreported subagents/provider-internal requests",
+        "invoice/subscription spend"
+      ],
+      "additional": [],
+      "sessionCorrelation": "39637302ec5f8586",
+      "nativeSessionCorrelation": "b7eaddfb688f78a9"
+    }
+  ],
+  "qualification": {
+    "sameWorkflow": true,
+    "explicitPromiseAll": true,
+    "initialDispatchLifetimesOverlap": true,
+    "notProofOfSimultaneousProviderCompute": true,
+    "nativeToolReadsVerified": true,
+    "explicitCrossProviderJsonContext": true,
+    "codexOnlyNativeContinuation": true,
+    "freshNativeSessionsDistinctFromStoppedAttempt": true,
+    "threePaidActions": true,
+    "automaticCorrections": 0,
+    "noAsfRetryOrModelFallback": true,
+    "noNewUnresolvedInSuccessfulRun": true
+  },
+  "replay": {
+    "passed": true,
+    "paidBefore": 20,
+    "paidAfter": 20,
+    "invocationsReportsLedgerSessionsUnchanged": true,
+    "noCredentialLoaded": true
+  },
+  "earlierAttempt": {
+    "runId": "mixed-codex-glm-20260922",
+    "passed": false,
+    "paidDispatches": 2,
+    "knownEstimatedUsd": 0.05681412,
+    "newUnresolved": 1,
+    "verifiedOutputs": [
+      {
+        "action": "codex/read",
+        "value": {
+          "marker": "mixed-providers-942",
+          "subtotal": 49
+        },
+        "accountingStatus": "incomplete"
+      },
+      {
+        "action": "opencode/read",
+        "value": {
+          "marker": "mixed-providers-942",
+          "subtotal": 39
+        },
+        "accountingStatus": "complete"
+      }
+    ],
+    "reason": "Overly restrictive20K cumulative-input guard rejected24840 Codex input tokens, mostly cached, before combine. Retained raw outputs were correct. A late SDK abort caused an unhandled error after durable records were saved. All old rows remain unchanged; a fresh run was separately authorized."
+  },
+  "fixes": {
+    "pricingThreshold": "https://developers.openai.com/api/docs/models/gpt-6-astra states prompts above272K input use long-context rates; the corrected200K cumulative-input guard conservatively stays below that threshold.",
+    "codexSignal": "Invocation-owned AbortController forwards active cancellation and detaches from workflow signal when the SDK iterator is disposed. No vendor package patch, blanket exception swallowing, accounting rewrite or resend.",
+    "offlineRegression": "Exact SDK with a synthetic executable reproduces pre-fix late AbortError, preserves known accounting, and passes with native cleanup after the fix; no model involved."
+  },
+  "allowance": {
+    "paidBeforeMixed": 15,
+    "knownBeforeMixed": 1.18713215,
+    "unresolvedBeforeMixed": 2,
+    "mixedPaidReservations": 5,
+    "mixedKnownEstimatedUsd": 0.1597668,
+    "paidAfterMixed": 20,
+    "knownAfterMixed": 1.34689895,
+    "unresolvedAfterMixed": 3,
+    "originalMaxPaidReservations": 20,
+    "originalSoftUsd": 10,
+    "exhausted": true,
+    "segmentsClosed": true,
+    "allPriorRowsHashVerifiedUnchanged": true
+  },
+  "source": {
+    "recordedRunIdentity": "670b7eb2e1239e92ab696ba4015abd66de86bef5ac65e5da6e84592c49a99811",
+    "hashEncoding": "ASF stable-JSON hash of source text",
+    "workflowIdentity": "670b7eb2e1239e92ab696ba4015abd66de86bef5ac65e5da6e84592c49a99811",
+    "sourceHashes": {
+      "src/runtime.ts": "b552e128b8df26638153aa1c8570fe0e0ab23bfcc717a2d9cf678d5fa25dfdf1",
+      "src/store.ts": "44b3141806be4a2947a97937a390ebbeba2c6bd9305d9c274ff613a4bac04d45",
+      "src/adapters/codex.ts": "ad217cbd76c34a0f8b15b3530a5b85a4a24164a2537341cd2f1f8050e151bf3e",
+      "src/adapters/opencode.ts": "fc1ef1bbbeda697e260542e143ca94688dfd6ced8ec0bfee93f1e5a3331d3b30",
+      "src/adapters/opencode-server.ts": "832a854a8675edbd0948b62df582894baadb113d265e2e827cab1ed4f33b8b39",
+      "scripts/codex-launcher.mjs": "1a6e42383db75ffefa91d30f6a531e74ae62c57f6fee17b2fc85b00890cf4e79",
+      "scripts/opencode-policy.mjs": "63cd066d2f9b1964d4405a65990406de0f5c2fdef33fd215c7d18439d60e1543",
+      "scripts/mixed-qualification-workflow.ts": "ddd6be3480e8af01f4f0c2712ac7efb39051fabe762cf1f17105a90e9d7989d4",
+      "scripts/qualification-evidence.ts": "2a301be40914c5326e53ebbf47d2e31db4072038bccea073db18e079256c418f",
+      "/root/asf-ts/.asf/mixed-verification-20260922/run-v2.ts": "f2f4536cc44f3c20244bf9330a9e8006836d70d38948c0bd747f370854650742"
+    }
+  },
+  "scope": "Reported-token estimates only, not invoice completeness. Codex model attribution is requested, not structured actual attribution; OpenCode GLM model is observed. Native Codex retries remain vendor-controlled. No global auth change, unrelated native-history import, or credential values in this bounded report."
+}

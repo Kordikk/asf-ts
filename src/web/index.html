@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ASF — read-only local runs</title>
+    <link rel="stylesheet" href="/ui.css" />
+    <script src="/flow-model.js" defer></script>
+    <script src="/ui.js" defer></script>
+  </head>
+  <body>
+    <header>
+      <h1>ASF · read-only local runs</h1>
+      <p class="caveat">
+        Not a complete harness terminal transcript. Prompts aren't retained.
+        Tracing defaults off and can truncate/drop content; only exposed
+        provider events are available. Final receipts remain even with tracing
+        off. Sensitive, untrusted content; no redaction guarantee.
+      </p>
+    </header>
+    <main>
+      <section aria-labelledby="runs-heading">
+        <h2 id="runs-heading">Runs</h2>
+        <button id="runs-prev">Previous runs</button>
+        <button id="runs-next">Next runs</button>
+        <button id="runs-refresh">Refresh run list</button>
+        <span id="runs-page"></span>
+        <label
+          >Run
+          <select id="runs">
+            <option value="">Select a run</option>
+          </select></label
+        >
+        <p id="list-status" role="status"></p>
+      </section>
+      <section id="workspace" hidden>
+        <h2 id="run-title"></h2>
+        <p id="run-status"></p>
+        <pre id="run-error" class="error"></pre>
+        <p id="cost" class="caveat"></p>
+        <p id="cost-kinds"></p>
+        <p>
+          Run-wide final ledger only, never added to cumulative reports. Known
+          subtotal is not an invoice or a total bill; completeness is relative
+          to reported scope. Commands cover ASF-dispatched model cost only, not
+          external costs.
+        </p>
+        <button id="records-prev">Previous records</button>
+        <button id="records-next">Next records</button>
+        <span id="records-page"></span>
+        <p>
+          Actions and invocations are independently paged (20 each). A selected
+          action's other turns/results may be on another page. No native session
+          files are read.
+        </p>
+        <div class="flow-layout">
+          <div class="map-panel">
+            <h2 id="map-heading">Execution map</h2>
+            <p id="map-coverage">
+              Loaded records only, not the whole workflow. Lanes are explicit
+              action-ID scope prefixes, not inferred parallel branches. Card
+              placement is not a dependency or timing diagram. No start/end or
+              fork/join edges.
+            </p>
+            <p class="map-legend">
+              Agent / command / unknown action · Select a card or turn to
+              inspect →
+            </p>
+            <div
+              id="execution-map"
+              aria-labelledby="map-heading"
+              aria-describedby="map-coverage"
+            ></div>
+            <h3>Session associations</h3>
+            <p>
+              Dashed rails mean shared recorded session membership only, not
+              causal predecessors or data flow. Only loaded invocations are
+              linked; other members may be on other pages. Turn numbers are
+              within an action, not global order.
+            </p>
+            <div id="session-links"></div>
+          </div>
+          <div class="detail-panel" aria-label="Selected action and invocation">
+            <h2>Selection details</h2>
+            <p id="selection-label"></p>
+            <label
+              >Action
+              <select id="actions"></select
+            ></label>
+            <div id="action-detail"></div>
+            <label
+              >Invocation / turn
+              <select id="turns"></select
+            ></label>
+            <div id="turn-detail"></div>
+            <h2>Retained observations — not normalized chat</h2>
+            <p>
+              Provider item snapshots and delta/end events are observations, not
+              separate conversation messages. Commit order is not cross-agent
+              causality. Filtered to the selected action/turn; run-level
+              lifecycle observations are also shown.
+            </p>
+            <p id="live-status" role="status"></p>
+            <button id="events-next">
+              Load next observations / resume live
+            </button>
+            <p id="window-status"></p>
+            <div id="events"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

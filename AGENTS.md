@@ -1,24 +1,28 @@
-# Agent Guidance
+# Agent guidance
 
-## Repository boundaries
+## Boundaries and authorization
 
-- Work in the independent checkout at `/root/asf-ts`.
-- Treat `/root/asf` as read-only reference material and preserve it unchanged.
-- Do not overwrite the user's untracked `/root/asf/typescript` work or import it wholesale.
-- When adapting behavior, read the current implementation and relevant tests and documentation first.
+- Work only in `/root/asf-ts`. `/root/asf` (including untracked `typescript/`) is read-only reference; never copy it wholesale.
+- The user authorized v1 implementation, tests, CI, documentation, and offline qualification. The previous documentation-only restriction is superseded.
+- Do not commit, publish, inspect credentials/private native sessions, change auth/global services/user configuration, or run live model tasks without separate explicit approval.
+- `npm run check` is account-free. The opt-in private-server lifecycle test uses empty temporary HOME/XDG directories and sends no prompt. The live qualification runner is **not** an offline check.
 
-## Engineering constraints
+## Design invariants
 
-- Keep ordinary async workflows and the SDK-first approach simple.
-- Prefer compatible first-party SDKs where practical.
-- Validate exact OpenCode V2 SDK compatibility; do not assume it.
-- Validate live cost coverage; TypeScript does not repair provider omissions in cost data.
-- Keep model cost estimates distinct from billed spend.
-- Represent unknown or pending costs explicitly, never as zero.
-- Do not redo model work solely to obtain accounting data.
-- Do not run live model tasks, incur charges, or use file-writing agent probes without explicit approval.
-- Do not expand into frameworks, replay systems, live UI, or brokers by default.
+- Ordinary async functions, reusable agent objects, explicit action IDs, `Promise.all`. No graph/DSL, broker, UI framework, councils, or replay engine.
+- Durable reservation before dispatch; raw receipt/accounting before output validation. Never automatically resend uncertain sends (including commands), retry native failures, or redo work for accounting.
+- Mandatory immutable accounting is separate from lossy, opt-in content tracing. Unknown/pending costs are null/unresolved, not zero. “Complete” is relative to the stated scope, never invoice completeness.
+- Preserve native session ownership, policy/model/workdir binding, and compare-and-swap baselines. Do not import or externally use ASF-owned sessions.
+- Pin and source-check exact SDK/CLI protocols. OpenCode beta uses the matching official HTTP client plus an owned private server; its embedded SDK package is not Node-compatible.
+- Keep typed correction bounded and same-session. Validate request identity on resume. New adapters implement `Harness` and the shared contract tests.
+- SQLite is authoritative. Events are observations in commit order, not cross-agent causality. Results/events/native sessions are sensitive and untrusted; no redaction guarantee.
 
-## Current scope
+## Checks
 
-This is a documentation-only bootstrap. It makes no promise of complete accounting and currently has no implementation, dependencies, tests, or CI. Do not add `package.json`, CI configuration, `.gitignore` boilerplate, copied implementation, a license choice, or unrelated files unless the scope is explicitly changed.
+`npm ci --ignore-scripts && npm run check`
+
+Optional **non-model**, isolated installed-CLI lifecycle check:
+
+`ASF_TEST_OPENCODE="$(command -v opencode2)" npx tsx --test test/opencode-lifecycle.test.ts`
+
+Read `docs/design.md`, `docs/sdk-qualification.md`, and `docs/live-qualification.md` before changing safety/accounting boundaries. Never put the live runner in CI.

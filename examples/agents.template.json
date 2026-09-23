@@ -1,0 +1,28 @@
+{
+  "codex": {
+    "adapter": "codex",
+    "model": "REQUIRED_CODEX_MODEL_ID",
+    "pricing": {
+      "model": "REQUIRED_CODEX_MODEL_ID",
+      "source": "REQUIRED_RATE_CARD_URL_OR_DOCUMENT",
+      "version": "REQUIRED_RATE_EFFECTIVE_DATE",
+      "input": null,
+      "cacheRead": null,
+      "cacheWrite": null,
+      "output": null
+    }
+  },
+  "opencode": {
+    "adapter": "opencode",
+    "model": "REQUIRED_PROVIDER/REQUIRED_MODEL_ID",
+    "pricing": {
+      "model": "REQUIRED_PROVIDER/REQUIRED_MODEL_ID",
+      "source": "REQUIRED_RATE_CARD_URL_OR_DOCUMENT",
+      "version": "REQUIRED_RATE_EFFECTIVE_DATE",
+      "input": null,
+      "cacheRead": null,
+      "cacheWrite": null,
+      "output": null
+    }
+  }
+}

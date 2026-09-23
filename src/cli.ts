@@ -1,0 +1,141 @@
+#!/usr/bin/env node
+import { parseArgs } from "node:util";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { pathToFileURL } from "node:url";
+import { Store } from "./store.js";
+import { Runtime } from "./runtime.js";
+import { serve } from "./http.js";
+import type { AgentFileConfig } from "./config.js";
+import type { AgentConfig, Json } from "./types.js";
+import { errorText, hash, sleep } from "./util.js";
+const { values, positionals } = parseArgs({
+  allowPositionals: true,
+  options: {
+    db: { type: "string", default: ".asf/store.db" },
+    run: { type: "string" },
+    workflow: { type: "string" },
+    config: { type: "string" },
+    input: { type: "string", default: "null" },
+    cwd: { type: "string", default: process.cwd() },
+    live: { type: "boolean", default: false },
+    "trace-content": { type: "boolean", default: false },
+    offset: { type: "string", default: "0" },
+    after: { type: "string", default: "0" },
+    limit: { type: "string", default: "100" },
+    follow: { type: "boolean" },
+    port: { type: "string", default: "0" },
+    help: { type: "boolean" },
+  },
+});
+const verb = positionals[0];
+if (values.help || !verb) {
+  console.log(
+    `ASF v0.1 (Node 22, Linux)\n  run|resume --run ID --workflow FILE [--config FILE] [--input JSON] [--cwd DIR] [--live] [--trace-content]\n  inspect --run ID [--offset 0] [--limit 100]\n  events --run ID [--after CURSOR] [--limit 100] [--follow]\n  serve [--port 0]\nAll accept --db PATH. Live model use requires --live. Workflow modules are trusted executable code.\nContent and results are sensitive/untrusted; local HTTP is read-only, not authenticated.`,
+  );
+} else {
+  const readonly = ["inspect", "events", "serve"].includes(verb);
+  const store = new Store(resolve(values.db), readonly);
+  const controller = new AbortController();
+  const abort = (): void => controller.abort();
+  process.once("SIGINT", abort);
+  process.once("SIGTERM", abort);
+  try {
+    if (verb === "serve") {
+      const server = await serve(store, Number(values.port));
+      const address = server.address();
+      if (address && typeof address !== "string")
+        console.log(`Read-only local UI: http://127.0.0.1:${address.port}/`);
+      await new Promise<void>((r) =>
+        controller.signal.addEventListener(
+          "abort",
+          () => {
+            server.closeAllConnections();
+            server.close(() => r());
+          },
+          { once: true },
+        ),
+      );
+    } else {
+      if (!values.run) throw new Error("--run is required");
+      if (verb === "inspect")
+        console.log(
+          JSON.stringify(
+            store.inspect(
+              values.run,
+              Number(values.offset),
+              Number(values.limit),
+            ),
+            null,
+            2,
+          ),
+        );
+      else if (verb === "events") {
+        let cursor = Number(values.after);
+        do {
+          const rows = store.events(values.run, cursor, Number(values.limit));
+          for (const row of rows) {
+            console.log(JSON.stringify(row));
+            cursor = row.cursor;
+          }
+          if (values.follow) await sleep(100);
+        } while (values.follow && !controller.signal.aborted);
+      } else if (verb === "run" || verb === "resume") {
+        if (!values.workflow)
+          throw new Error("--workflow required (also on resume)");
+        const path = resolve(values.workflow);
+        const config = values.config
+          ? (JSON.parse(readFileSync(values.config, "utf8")) as Record<
+              string,
+              AgentFileConfig
+            >)
+          : {};
+        const input = JSON.parse(values.input) as Json;
+        // Read-only inspection/serve never needs to import provider adapters.
+        const { agentsFromConfig } = await import("./config.js");
+        const agents = agentsFromConfig(
+          config,
+          resolve(values.db, "..", "native", values.run),
+        );
+        const module = (await import(pathToFileURL(path).href)) as {
+          workflow: (
+            r: Runtime,
+            input: Json,
+            agents: Record<string, AgentConfig>,
+          ) => Promise<unknown>;
+        };
+        if (typeof module.workflow !== "function")
+          throw new Error("Module must export workflow");
+        const runtime = new Runtime({
+          store,
+          runId: values.run,
+          workflowIdentity: hash({
+            path,
+            source: readFileSync(path, "utf8"),
+            config,
+            input,
+            cwd: resolve(values.cwd),
+          }),
+          cwd: values.cwd,
+          live: values.live,
+          traceContent: values["trace-content"],
+          signal: controller.signal,
+        });
+        console.log(
+          JSON.stringify(
+            await runtime.run((r) => module.workflow(r, input, agents)),
+            null,
+            2,
+          ),
+        );
+      } else throw new Error("Unknown command");
+    }
+  } catch (e) {
+    console.error(errorText(e));
+    process.exitCode = 1;
+  } finally {
+    store.close();
+    process.removeListener("SIGINT", abort);
+    process.removeListener("SIGTERM", abort);
+  }
+}

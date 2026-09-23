@@ -1,0 +1,237 @@
+:root {
+  color-scheme: light;
+  font:
+    16px system-ui,
+    sans-serif;
+  color: #17212b;
+  background: #f5f6f7;
+}
+body {
+  max-width: 1600px;
+  margin: auto;
+  padding: 1rem;
+}
+header {
+  background: #f5f6f7;
+  padding: 0.25rem 0;
+}
+h1 {
+  font-size: 1.5rem;
+}
+/* Leave context when bringing a selection into view. */
+[id],
+.observation {
+  scroll-margin-top: 1rem;
+}
+h2 {
+  font-size: 1.2rem;
+}
+section {
+  background: white;
+  border: 1px solid #bbc4ca;
+  padding: 1rem;
+  margin: 1rem 0;
+}
+.caveat {
+  background: #fff3cc;
+  border-left: 4px solid #8a6500;
+  padding: 0.7rem;
+}
+label {
+  display: block;
+  margin: 0.8rem 0;
+  font-weight: bold;
+}
+select {
+  max-width: 100%;
+}
+button,
+select {
+  font: inherit;
+  padding: 0.35rem;
+  margin: 0.2rem;
+}
+button:disabled {
+  opacity: 0.5;
+}
+pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 24rem;
+  overflow: auto;
+  background: #f0f3f5;
+  padding: 0.7rem;
+}
+p,
+summary {
+  overflow-wrap: anywhere;
+}
+.error,
+.warning {
+  color: #8c2400;
+  font-weight: bold;
+}
+.observation {
+  border-top: 1px solid #bbc4ca;
+  padding: 0.5rem 0;
+}
+details {
+  margin: 0.5rem 0;
+}
+summary {
+  cursor: pointer;
+}
+[hidden] {
+  display: none !important;
+}
+
+/* Scope lanes are spatial groups, never causal/timing edges. */
+.flow-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+.map-panel,
+.detail-panel {
+  min-width: 0;
+}
+.map-panel {
+  max-height: 90vh;
+  overflow: auto;
+  padding-right: 0.5rem;
+}
+.detail-panel {
+  max-height: 90vh;
+  overflow: auto;
+  border-left: 2px solid #bbc4ca;
+  padding-left: 1.25rem;
+}
+#execution-map {
+  overflow-x: auto;
+  padding: 0.2rem;
+}
+.flow-lane {
+  margin: 0.6rem 0;
+  padding: 0.65rem;
+  background: #f0f4f7;
+  border-radius: 0.5rem;
+}
+.flow-lane h3 {
+  margin: 0 0 0.6rem;
+  font-size: 0.95rem;
+  overflow-wrap: anywhere;
+}
+.lane-track {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+.flow-card {
+  flex: 0 0 16rem;
+  min-width: 0;
+  border: 1px solid #a5b7c4;
+  border-top: 4px solid #66747e;
+  border-radius: 0.4rem;
+  background: white;
+  overflow: hidden;
+}
+.agent-card {
+  border-top-color: #2664a0;
+}
+.command-card {
+  border-top-color: #946017;
+}
+.card-pick {
+  display: grid;
+  gap: 0.35rem;
+  text-align: left;
+  width: 100%;
+  margin: 0;
+  border: 0;
+  padding: 0.7rem;
+  background: transparent;
+}
+.card-pick strong {
+  font-size: 1.05rem;
+}
+.card-pick span,
+.card-pick strong {
+  overflow-wrap: anywhere;
+}
+.card-kind,
+.card-id,
+.card-cost,
+.turn-caption {
+  font-size: 0.8rem;
+}
+.flow-card p {
+  margin: 0.5rem 0.7rem;
+}
+.turn-track {
+  border-top: 1px dashed #879cab;
+  padding: 0.4rem;
+}
+.turn-track button,
+.session-rail button {
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
+  max-width: 100%;
+}
+.session-rail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px dashed #6d8191;
+  border-left-width: 4px;
+  padding: 0.5rem;
+  margin: 0.5rem 0;
+}
+.session-rail strong {
+  width: 100%;
+  font-size: 0.85rem;
+}
+.session-rail span {
+  font-size: 0.8rem;
+}
+button {
+  cursor: pointer;
+}
+button[aria-pressed="true"] {
+  background: #dceeff;
+  box-shadow: inset 0 0 0 2px #185a95;
+  color: #103654;
+}
+button:focus-visible,
+select:focus-visible {
+  outline: 3px solid #9b3eae;
+  outline-offset: 2px;
+}
+.map-legend {
+  font-size: 0.85rem;
+  color: #344f64;
+}
+@media (max-width: 850px) {
+  body {
+    padding: 0.5rem;
+  }
+  .flow-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .map-panel {
+    position: static;
+    max-height: none;
+    padding: 0;
+  }
+  .detail-panel {
+    max-height: none;
+    overflow: visible;
+    border-left: 0;
+    border-top: 2px solid #bbc4ca;
+    padding: 0.5rem 0 0;
+  }
+  section {
+    padding: 0.65rem;
+  }
+}

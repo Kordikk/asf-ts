@@ -1,0 +1,35 @@
+{
+  "name": "asf-workflow",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.22.0 <23"
+  },
+  "scripts": {
+    "build": "tsc && cp scripts/*.mjs dist/scripts/ && mkdir -p dist/src/web && cp src/web/* dist/src/web/",
+    "verify:ui": "tsx scripts/verify-ui.ts",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.web.json",
+    "test": "tsx --test test/*.test.ts",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "npm run typecheck && npm run lint && npm run format:check && npm test && npm run build",
+    "asf": "tsx src/cli.ts",
+    "qualify": "tsx scripts/qualify.ts"
+  },
+  "dependencies": {
+    "@openai/codex-sdk": "0.154.0",
+    "@opencode-ai/client": "0.0.0-beta-18684",
+    "ajv": "8.20.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1",
+    "@types/node": "22.19.15",
+    "eslint": "9.39.2",
+    "prettier": "3.8.1",
+    "tsx": "4.23.13",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.56.1"
+  }
+}

@@ -1,0 +1,216 @@
+{
+  "date": "2026-09-22",
+  "nativeVersion": "opencode2 v0.0.0-beta-18684",
+  "clientVersion": "@opencode-ai/client@0.0.0-beta-18684",
+  "model": "opencode-go/gpt-5.6-luna",
+  "runId": "qualify-opencode-go-20260922-v2",
+  "qualification": {
+    "passed": true,
+    "paidDispatches": 5,
+    "localCommands": 1,
+    "readTool": true,
+    "sameNativeContinuation": true,
+    "exactByteWrite": true,
+    "rawInvalidFormat": "NOT_JSON",
+    "sameNativeCorrection": true,
+    "correctedValue": {
+      "ok": true
+    },
+    "observedNativeSteps": 10,
+    "observedNativeRetries": 0,
+    "successfulLocalToolEvents": {
+      "read": 2,
+      "write": 2
+    },
+    "newUnresolved": 0,
+    "knownEstimatedUsd": 0.00216455
+  },
+  "scope": "Positive native reported-token usage at an explicit matching-model Go rate card, reconciled against owned-session aggregate deltas; no subscription invoice or invisible vendor-work completeness claim. No live failure/cancellation experiment was added.",
+  "pricing": {
+    "model": "opencode-go/gpt-5.6-luna",
+    "source": "https://opencode.ai/docs/go/#usage-limits",
+    "retrieved": "2026-09-22",
+    "units": "USD per 1 million tokens; Go usage-rate estimate, not a subscription invoice",
+    "publishedTier": "GPT 5.6 Luna <=272K context",
+    "qualificationMaximumObservedStepInput": 200000,
+    "pricing": {
+      "input": 0.2,
+      "cacheRead": 0.02,
+      "cacheWrite": 0.25,
+      "output": 1.2
+    },
+    "publishedLongContextTier": {
+      "input": 0.4,
+      "cacheRead": 0.04,
+      "cacheWrite": 0.5,
+      "output": 1.8
+    },
+    "nativeCatalogShortContext": {
+      "input": 0.1,
+      "cacheRead": 0.01,
+      "cacheWrite": 0.125,
+      "output": 0.6
+    },
+    "note": "The exact beta's bundled rate metadata is older. Qualification explicitly uses the independently retrieved published Go rate card and stops if an observed step exceeds the conservative 200K input ceiling. Native step/aggregate costs remain reconciliation evidence, not duplicate amounts added to the ASF estimate."
+  },
+  "turns": [
+    {
+      "action": "read-tool",
+      "turn": 0,
+      "status": "succeeded",
+      "estimatedUsd": 0.0008174,
+      "kind": "asf-calculated",
+      "model": "opencode-go/gpt-5.6-luna",
+      "modelSource": "observed",
+      "tokens": {
+        "input": 3025,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "output": 177,
+        "reasoning": 32
+      },
+      "scope": "exposed main-session inference tokens; explicit rates, not native catalog cost",
+      "excluded": [
+        "provider-internal requests and unreported token components",
+        "invoice/subscription spend"
+      ],
+      "additional": [],
+      "nativeSessionCorrelation": "2512e6fe229f771e"
+    },
+    {
+      "action": "continuation",
+      "turn": 0,
+      "status": "succeeded",
+      "estimatedUsd": 0.0001954,
+      "kind": "asf-calculated",
+      "model": "opencode-go/gpt-5.6-luna",
+      "modelSource": "observed",
+      "tokens": {
+        "input": 929,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "output": 8,
+        "reasoning": 0
+      },
+      "scope": "exposed main-session inference tokens; explicit rates, not native catalog cost",
+      "excluded": [
+        "provider-internal requests and unreported token components",
+        "invoice/subscription spend"
+      ],
+      "additional": [],
+      "nativeSessionCorrelation": "2512e6fe229f771e"
+    },
+    {
+      "action": "write",
+      "turn": 0,
+      "status": "succeeded",
+      "estimatedUsd": 0.00083475,
+      "kind": "asf-calculated",
+      "model": "opencode-go/gpt-5.6-luna",
+      "modelSource": "observed",
+      "tokens": {
+        "input": 1911,
+        "cacheRead": 0,
+        "cacheWrite": 1095,
+        "output": 149,
+        "reasoning": 84
+      },
+      "scope": "exposed main-session inference tokens; explicit rates, not native catalog cost",
+      "excluded": [
+        "provider-internal requests and unreported token components",
+        "invoice/subscription spend"
+      ],
+      "additional": [],
+      "nativeSessionCorrelation": "dca32ae73741d5c7"
+    },
+    {
+      "action": "format",
+      "turn": 0,
+      "status": "succeeded",
+      "estimatedUsd": 0.00012880000000000001,
+      "kind": "asf-calculated",
+      "model": "opencode-go/gpt-5.6-luna",
+      "modelSource": "observed",
+      "tokens": {
+        "input": 608,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "output": 6,
+        "reasoning": 0
+      },
+      "scope": "exposed main-session inference tokens; explicit rates, not native catalog cost",
+      "excluded": [
+        "provider-internal requests and unreported token components",
+        "invoice/subscription spend"
+      ],
+      "additional": [],
+      "nativeSessionCorrelation": "20899ec582dbd947"
+    },
+    {
+      "action": "format",
+      "turn": 1,
+      "status": "succeeded",
+      "estimatedUsd": 0.00018820000000000002,
+      "kind": "asf-calculated",
+      "model": "opencode-go/gpt-5.6-luna",
+      "modelSource": "observed",
+      "tokens": {
+        "input": 671,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "output": 45,
+        "reasoning": 34
+      },
+      "scope": "exposed main-session inference tokens; explicit rates, not native catalog cost",
+      "excluded": [
+        "provider-internal requests and unreported token components",
+        "invoice/subscription spend"
+      ],
+      "additional": [],
+      "nativeSessionCorrelation": "20899ec582dbd947"
+    }
+  ],
+  "earlierGoRun": {
+    "runId": "qualify-opencode-go-20260922",
+    "qualificationPassed": false,
+    "readActionSucceeded": true,
+    "paidDispatches": 1,
+    "knownEstimatedUsd": 0.0005416,
+    "newUnresolved": 0,
+    "reason": "Verifier incorrectly required executed:true for local tools. Exact source and retained glob/read success events prove executed is providerExecuted; corrected predicate requires false. Old records/source were not rewritten; a fresh source-bound run received separate user confirmation."
+  },
+  "allowance": {
+    "originalMaxPaidReservations": 20,
+    "originalSoftUsd": 10,
+    "paidBeforeGo": 9,
+    "knownBeforeGo": 1.184426,
+    "goPaidDispatches": 6,
+    "goKnownEstimatedUsd": 0.00270615,
+    "paidAfterGo": 15,
+    "knownAfterGo": 1.18713215,
+    "unresolvedBefore": 2,
+    "unresolvedAfter": 2,
+    "allPreExistingRowsHashVerifiedUnchanged": true,
+    "allGoSegmentsClosed": true
+  },
+  "replay": {
+    "passed": true,
+    "paidReservationsBefore": 15,
+    "paidReservationsAfter": 15,
+    "invocationsReportsLedgerSessionsUnchanged": true,
+    "credentialLoaderNotCalled": "--replay branch uses only a nonsecret identity placeholder; live=false"
+  },
+  "source": {
+    "recordedRunIdentity": "a9a73d3dcfe9ffd1a05d6d04077074d61deb720a09b349f53f5b85956159983e",
+    "hashes": {
+      "src/adapters/opencode.ts": "ef3e3d87f2c65b84ba9cf77f5ce2552e7da11b7c38f018a804d219ddf14d4c5d",
+      "src/adapters/opencode-server.ts": "fcc4c7f3b83425fd9fff2f9dbf927d4cd90e5b34f64008d911594b622998b047",
+      "src/runtime.ts": "27eb5c0b5fdc5f60402535c7fb8b480661ddf0f10356f97c3cec41d4f20299e5",
+      "src/store.ts": "368117eef2df626e01d47d876afec253450e73658c2e7923cc42c1ed3597e1a2",
+      "scripts/qualification-workflow.ts": "fcbeff936fb17d9544682331dd84ae8cfe334397ef41471a8eb030115543401e",
+      "scripts/qualification-evidence.ts": "c812abb39af02c466d7de3c9f0d7053c5e0fa7445c7cbadcdca316a0d28b1f12",
+      ".asf/opencode-verification-20260922/approved-run-v2.ts": "2b35ddc7521419531a80f5565bb832fb62001a64acde2c3b825d863da5c50492"
+    }
+  },
+  "privateEvidence": "Authoritative ASF records and credentials in owned native DBs remain ignored/private. Only bounded synthetic results, public rates, counts and hashed native correlations are included here. No credentials or unrelated native history are included."
+}
