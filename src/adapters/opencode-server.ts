@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import { OpenCode } from "@opencode-ai/client";
 import { stopProcess } from "../process.js";
 import { clip, sleep } from "../util.js";
-export const OPENCODE_VERSION = "0.0.0-beta-18684";
+export const OPENCODE_VERSION = "0.0.0-beta-19271";
 export type OpenCodeClient = ReturnType<typeof OpenCode.make>;
 export interface PrivateServer {
   client: OpenCodeClient;
@@ -35,9 +35,7 @@ export async function privateServer(
   const password = randomBytes(32).toString("hex");
   const config = {
     plugins: [
-      fileURLToPath(
-        new URL("../../scripts/opencode-policy.mjs", import.meta.url),
-      ),
+      fileURLToPath(new URL("../../scripts/opencode-policy/", import.meta.url)),
     ],
     compaction: { auto: false },
     share: "disabled",
@@ -230,10 +228,12 @@ export async function requirePolicy(
       { signal },
     );
     if (
-      plugins.data.some((p) => p.status === "active" && p.id === "asf-no-retry")
+      plugins.data.some(
+        (p) => p.state.status === "active" && p.id === "asf-no-retry",
+      )
     )
       return;
-    const failed = plugins.data.find((p) => p.status === "failed");
+    const failed = plugins.data.find((p) => p.state.status === "failed");
     if (failed)
       throw new Error(
         `Policy initialization failed: ${JSON.stringify(failed)}`,

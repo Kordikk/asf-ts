@@ -3,7 +3,11 @@ import assert from "node:assert/strict";
 import { chmodSync, existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { CodexHarness, type CodexPort } from "../src/adapters/codex.js";
+import {
+  CODEX_VERSION,
+  CodexHarness,
+  type CodexPort,
+} from "../src/adapters/codex.js";
 import { command } from "../src/process.js";
 import { fixture, pricing } from "./helpers.js";
 import { sleep } from "../src/util.js";
@@ -131,7 +135,7 @@ test("real Codex SDK: report-sink failure retains accounting without a late unha
       executable,
       `#!/usr/bin/env node
 const fs=require('node:fs');
-if(process.argv.includes('--version')){console.log('codex-cli 0.154.0');process.exit(0)}
+if(process.argv.includes('--version')){console.log('codex-cli ${CODEX_VERSION}');process.exit(0)}
 fs.writeFileSync(${JSON.stringify(pidfile)},String(process.pid));
 process.on('SIGTERM',()=>{});
 process.stdin.resume();process.stdin.on('end',()=>{

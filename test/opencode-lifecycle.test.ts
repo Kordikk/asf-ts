@@ -63,7 +63,7 @@ test(
         });
         assert.ok(
           plugins.data.some(
-            (p) => p.status === "active" && p.id === "asf-no-retry",
+            (p) => p.state.status === "active" && p.id === "asf-no-retry",
           ),
           JSON.stringify(plugins),
         );

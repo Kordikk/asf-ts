@@ -6,6 +6,8 @@ Small SDK-first workflow runtime for **Node 22.22.x / Linux**. Ordinary async Ty
 
 ## Run offline
 
+Current pins: `@openai/codex-sdk@0.159.2` (bundled `codex-cli 0.159.2`) and `@opencode-ai/client@0.0.0-beta-19271`. OpenCode requires the matching `@opencode-ai/cli@0.0.0-beta-19271` (`opencode2`), not the timestamped `opencode-ai` beta or stable 1.x SDK. Use project-local executables; see [installation, source checks and offline upgrade limits](docs/sdk-upgrade-20260930.md). Historical live results below do **not** qualify these pins, and old session/action bindings cannot be continued with the upgraded adapters.
+
 ```sh
 npm ci --ignore-scripts
 npm run check
@@ -51,7 +53,7 @@ Create `Store`, `Runtime`, and a harness via `src/index.ts` (or built `dist/src/
 
 ### Mixing providers in one workflow
 
-[`mixedQualificationWorkflow`](scripts/mixed-qualification-workflow.ts) runs two typed read-only actions with `Promise.all`, then continues the Codex session with both returned values as explicit JSON context. It accepts ordinary reusable `{codex, opencode}` agent configs—no graph or broker. The live Codex `gpt-6-astra` + OpenCode Go `glm-5.2` check produced **49 + 39 → 88**, and replay sent nothing. See [results and retained failure history](docs/verification.md) and [machine-readable evidence](docs/evidence/qualification-mixed-20260922.json). The original live allowance is exhausted; these results do not authorize another run.
+[`mixedQualificationWorkflow`](scripts/mixed-qualification-workflow.ts) runs two typed read-only actions with `Promise.all`, then continues the Codex session with both returned values as explicit JSON context. It accepts ordinary reusable `{codex, opencode}` agent configs—no graph or broker. The historical live Codex `gpt-6-astra` + OpenCode Go `glm-5.2` check produced **49 + 39 → 88**, and replay sent nothing. See [results and retained failure history](docs/verification.md) and [machine-readable evidence](docs/evidence/qualification-mixed-20260922.json). The original live allowance is exhausted; these results do not authorize another run.
 
 ## Local read-only UI
 
@@ -86,7 +88,7 @@ Uses pinned Playwright/Chromium and an actual `recordVideo` browser context agai
 
 Artifacts (overwritten on reproduction): `.asf/ui-verification/workflow-ui.webm` and `workflow-ui.png`. Database fixtures are retained in their unique directories; these ignored artifacts are not committed.
 
-[Verification results](docs/verification.md): Codex passed five live turns covering tools, native continuation, writing, and same-session correction; replay sent no new requests. OpenCode now also passed five live ASF turns and account-free replay on the explicitly authorized `opencode-go/gpt-5.6-luna` route, with real tools, native continuation/correction and complete **declared-scope estimates**. Private API-key provisioning is opt-in; global auth is not imported or changed. The earlier free-route HTTP 403 and its unresolved accounting remain preserved, and no invoice-completeness claim is made. No Claude/Cursor adapters, councils, executable workflow graph, broker, or automatic uncertain-send reconciliation are included.
+[Verification results](docs/verification.md): Codex passed five live turns covering tools, native continuation, writing, and same-session correction; replay sent no new requests. OpenCode historically also passed five live ASF turns and account-free replay on the explicitly authorized `opencode-go/gpt-5.6-luna` route, with real tools, native continuation/correction and complete **declared-scope estimates**. Private API-key provisioning is opt-in; global auth is not imported or changed. The earlier free-route HTTP 403 and its unresolved accounting remain preserved, and no invoice-completeness claim is made. No Claude/Cursor adapters, councils, executable workflow graph, broker, or automatic uncertain-send reconciliation are included.
 
 ### Separately authorized real Codex recording
 

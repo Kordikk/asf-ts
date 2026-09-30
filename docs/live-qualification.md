@@ -4,6 +4,8 @@
 
 ## Configuration and exact commands
 
+The supported pins changed on 2026-09-30; see [offline upgrade qualification](sdk-upgrade-20260930.md). Existing live evidence and allowances are historical, not validation or authorization for the new versions. Do not resume old live actions/sessions with new adapter identities. The later failed coder allowance remains unresolved and authorizes no more sends.
+
 Copy `examples/agents.template.json` to an untracked file under `.asf/`. Fill in:
 
 - `codex.model`: an explicitly approved available Codex **OpenAI** model ID; `pricing.model` must match exactly. No automatic/default model.

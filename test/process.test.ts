@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawn } from "node:child_process";
 import { command } from "../src/process.js";
-import { CodexHarness } from "../src/adapters/codex.js";
+import { CODEX_VERSION, CodexHarness } from "../src/adapters/codex.js";
 import { fixture, pricing } from "./helpers.js";
 import { sleep } from "../src/util.js";
 function running(pid: number): boolean {
@@ -134,7 +134,7 @@ test("real official Codex SDK exec transport through lifecycle shim, no model", 
     const executable = join(f.dir, "fake-codex");
     writeFileSync(
       executable,
-      `#!/usr/bin/env node\nif(process.argv.includes('--version')){console.log('codex-cli 0.154.0');process.exit(0)}\nprocess.stdin.resume();process.stdin.on('end',()=>{for(const e of [{type:'thread.started',thread_id:'fixture-thread'},{type:'item.completed',item:{type:'agent_message',id:'message',text:'official-sdk'}},{type:'turn.completed',usage:{input_tokens:10,cached_input_tokens:0,cache_write_input_tokens:0,output_tokens:4,reasoning_output_tokens:1}}])console.log(JSON.stringify(e));});\n`,
+      `#!/usr/bin/env node\nif(process.argv.includes('--version')){console.log('codex-cli ${CODEX_VERSION}');process.exit(0)}\nprocess.stdin.resume();process.stdin.on('end',()=>{for(const e of [{type:'thread.started',thread_id:'fixture-thread'},{type:'item.completed',item:{type:'agent_message',id:'message',text:'official-sdk'}},{type:'turn.completed',usage:{input_tokens:10,cached_input_tokens:0,cache_write_input_tokens:0,output_tokens:4,reasoning_output_tokens:1}}])console.log(JSON.stringify(e));});\n`,
     );
     chmodSync(executable, 0o755);
     const harness = new CodexHarness({ pricing, executable });

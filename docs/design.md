@@ -2,23 +2,23 @@
 
 ## File map
 
-| File                                           | Responsibility                                                                                             |
-| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `src/types.ts`                                 | Small `Harness`, request, sink, receipt, accounting, agent contracts                                       |
-| `src/runtime.ts`                               | Run ownership, stable actions/scopes, raw/typed agents, correction, command composition                    |
-| `src/store.ts`                                 | Authoritative shared SQLite v1 store, reservations, immutable reports/ledger, session CAS, bounded queries |
-| `src/accounting.ts`                            | Explicit rate validation, normalized tokens, cumulative deltas, known subtotals                            |
-| `src/adapters/{codex,opencode}.ts`             | SDK-specific mapping and accounting scope                                                                  |
-| `src/adapters/opencode-server.ts`              | Private authenticated loopback server handshake/lifetime, policy readiness                                 |
-| `scripts/{codex-launcher,opencode-policy}.mjs` | Byte-only process lifecycle shim; native no-retry hook                                                     |
-| `src/process.ts`                               | Shell-free argv commands, bounded output, process-group cleanup                                            |
-| `src/{cli,http,config}.ts`                     | CLI/module loading, read-only localhost polling/SSE, explicit agent configuration                          |
-| `src/web/*`                                    | Plain, read-only local UI; literal content rendering and bounded same-origin GET polling                   |
-| `scripts/{ui-fixture,verify-ui}.ts`            | Synthetic offline browser regression and Playwright video recording; no providers                          |
-| `scripts/qualify.ts`                           | Opt-in shared-budget live qualification; never invoked by checks                                           |
-| `test/`                                        | Runtime, shared adapter contract, injected exact SDK seams, real local process/HTTP/crash tests            |
+| File                                                              | Responsibility                                                                                             |
+| ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `src/types.ts`                                                    | Small `Harness`, request, sink, receipt, accounting, agent contracts                                       |
+| `src/runtime.ts`                                                  | Run ownership, stable actions/scopes, raw/typed agents, correction, command composition                    |
+| `src/store.ts`                                                    | Authoritative shared SQLite v1 store, reservations, immutable reports/ledger, session CAS, bounded queries |
+| `src/accounting.ts`                                               | Explicit rate validation, normalized tokens, cumulative deltas, known subtotals                            |
+| `src/adapters/{codex,opencode}.ts`                                | SDK-specific mapping and accounting scope                                                                  |
+| `src/adapters/opencode-server.ts`                                 | Private authenticated loopback server handshake/lifetime, policy readiness                                 |
+| `scripts/codex-launcher.mjs`, `scripts/opencode-policy/index.mjs` | Byte-only process lifecycle shim; native retry-policy hook                                                 |
+| `src/process.ts`                                                  | Shell-free argv commands, bounded output, process-group cleanup                                            |
+| `src/{cli,http,config}.ts`                                        | CLI/module loading, read-only localhost polling/SSE, explicit agent configuration                          |
+| `src/web/*`                                                       | Plain, read-only local UI; literal content rendering and bounded same-origin GET polling                   |
+| `scripts/{ui-fixture,verify-ui}.ts`                               | Synthetic offline browser regression and Playwright video recording; no providers                          |
+| `scripts/qualify.ts`                                              | Opt-in shared-budget live qualification; never invoked by checks                                           |
+| `test/`                                                           | Runtime, shared adapter contract, injected exact SDK seams, real local process/HTTP/crash tests            |
 
-No plugin discovery framework, task graph, orchestration service, provider pricing service, or application replay engine. The tiny OpenCode policy module uses a vendor hook solely to prohibit native retries.
+No plugin discovery framework, task graph, orchestration service, provider pricing service, or application replay engine. The tiny OpenCode policy module uses a vendor retry hook solely to decline retry-policy decisions. It does not control every vendor transport recovery path; see [the current source-check limits](sdk-upgrade-20260930.md).
 
 ## Authoring/API
 
@@ -75,7 +75,7 @@ These are ASF retention/queue limits, not universal process-memory or disk quota
 
 ## Cancellation and safety
 
-Runtime signals/timeouts reach SDK operations. Codex uses an invocation-owned cancellation signal: active cancellation is forwarded, then the upstream listener is detached when the SDK iterator is disposed. This prevents a later workflow/sibling abort from re-signalling a child whose v0.154 SDK error listeners have already been removed. Codex's official SDK parses exec JSONL; a byte-forwarding executable shim owns a process group and bounds stderr, sends TERM/KILL on abort, and monitors parent loss. It never parses provider JSONL. OpenCode uses `session.interrupt`, AbortSignals and final owned-server process-group cleanup. Local commands use argv without a shell, TERM then KILL, and do not wait indefinitely for descendants holding pipes. Tests exercise TERM-ignoring descendants and leader-exit pipe retention.
+Runtime signals/timeouts reach SDK operations. Codex uses an invocation-owned cancellation signal: active cancellation is forwarded, then the upstream listener is detached when the SDK iterator is disposed. This prevents a later workflow/sibling abort from re-signalling a child whose v0.159.2 SDK error listeners have already been removed. Codex's official SDK parses exec JSONL; a byte-forwarding executable shim owns a process group and bounds stderr, sends TERM/KILL on abort, and monitors parent loss. It never parses provider JSONL. OpenCode uses `session.interrupt`, AbortSignals and final owned-server process-group cleanup. Local commands use argv without a shell, TERM then KILL, and do not wait indefinitely for descendants holding pipes. Tests exercise TERM-ignoring descendants and leader-exit pipe retention.
 
 No rollback or sandbox stronger than the vendor is promised. Codex selects native read-only/workspace-write sandbox and no approvals. OpenCode's read-only policy denies shell/edit/subagent/network tools and permits read/glob/grep/list; it is a **permission policy, not an OS sandbox**. Write mode permits shell/edit and is not a security boundary around cwd. Escaped/detached processes and arbitrary trusted workflow code remain outside strict containment guarantees. Do not run hostile workflow modules, schemas, tools, or prompts with access to valuable files.
 

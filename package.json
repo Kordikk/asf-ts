@@ -7,7 +7,7 @@
     "node": ">=22.22.0 <23"
   },
   "scripts": {
-    "build": "tsc && cp scripts/*.mjs dist/scripts/ && mkdir -p dist/src/web && cp src/web/* dist/src/web/",
+    "build": "tsc && cp scripts/*.mjs dist/scripts/ && cp -R scripts/opencode-policy dist/scripts/ && mkdir -p dist/src/web && cp src/web/* dist/src/web/",
     "verify:ui": "tsx scripts/verify-ui.ts",
     "typecheck": "tsc --noEmit && tsc -p tsconfig.web.json",
     "test": "tsx --test test/*.test.ts",
@@ -19,8 +19,8 @@
     "qualify": "tsx scripts/qualify.ts"
   },
   "dependencies": {
-    "@openai/codex-sdk": "0.154.0",
-    "@opencode-ai/client": "0.0.0-beta-18684",
+    "@openai/codex-sdk": "0.159.2",
+    "@opencode-ai/client": "0.0.0-beta-19271",
     "ajv": "8.20.0"
   },
   "devDependencies": {

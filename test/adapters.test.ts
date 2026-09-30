@@ -137,9 +137,9 @@ function openCodeFixture(responses: string[] = ["ok"]) {
         data: [
           {
             id: "asf-no-retry",
-            status: "active",
+            state: { status: "active" },
             source: { type: "local", path: "x" },
-            tui: false,
+            features: { server: true },
           },
         ],
       }),
@@ -661,7 +661,7 @@ test("OpenCode durably reports a cost-only failed step through terminal failure 
           scope: "native failed-step estimate without reported token usage",
           model: null,
           source: "session.step.failed.cost",
-          version: "0.0.0-beta-18684",
+          version: "0.0.0-beta-19271",
         },
       ],
       terminal,
@@ -952,7 +952,8 @@ test("OpenCode auxiliary estimates remain distinct and present in known totals",
   }
 });
 test("native OpenCode retry policy hook denies the retry decision", async () => {
-  const url = new URL("../scripts/opencode-policy.mjs", import.meta.url).href;
+  const url = new URL("../scripts/opencode-policy/index.mjs", import.meta.url)
+    .href;
   type Decision = { decision: { retry: boolean; delay?: number } };
   let hook: ((event: Decision) => void) | undefined;
   const module = (await import(url)) as {

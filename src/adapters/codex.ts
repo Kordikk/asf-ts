@@ -19,7 +19,19 @@ import {
 } from "../accounting.js";
 import { command } from "../process.js";
 import { clip, errorText, json, boundedJson } from "../util.js";
-export const CODEX_VERSION = "0.154.0";
+export const CODEX_VERSION = "0.159.2";
+// Bound the serialized string too: control characters can expand sixfold in JSON.
+function diagnostic(text: string, bytes = 4096): string {
+  let result = "";
+  let used = 2; // JSON quotes
+  for (const character of text) {
+    const size = Buffer.byteLength(JSON.stringify(character)) - 2;
+    if (used + size > bytes) break;
+    result += character;
+    used += size;
+  }
+  return result;
+}
 export interface CodexPort {
   startThread(options: ThreadOptions): {
     runStreamed(
@@ -86,7 +98,7 @@ export class CodexHarness implements Harness {
           config: {
             model_provider: "openai",
             features: { multi_agent: false },
-            // Built-in provider IDs cannot be overridden in CLI 0.154.0.
+            // Built-in provider IDs cannot be overridden in CLI 0.159.2.
             // ASF does not retry; request/stream retries remain vendor-controlled.
           },
         });
@@ -127,11 +139,13 @@ export class CodexHarness implements Harness {
       completed = false,
       failed = false,
       error: string | undefined,
+      nativeError: string | undefined,
+      itemError: string | undefined,
       rerouteNotice: string | undefined;
     const baseline =
       (request.session?.baseline as Tokens | undefined) ?? zeroTokens();
     let invalidScope = false;
-    // SDK v0.154 removes child error listeners when its iterator is disposed.
+    // SDK v0.159.2 removes child error listeners when its iterator is disposed.
     // Forward cancellation only while this invocation owns that iterator; a
     // later workflow/sibling abort must not signal the already-disposed child.
     const sdkController = new AbortController();
@@ -164,15 +178,17 @@ export class CodexHarness implements Harness {
           case "item.updated":
           case "item.completed": {
             const item = event.item;
-            // v0.154 exposes reroutes as textual error items, not model attribution.
+            // v0.159.2 exposes reroutes as textual error items, not model attribution.
             // Keep the first bounded notice independently of the lossy trace sink.
             if (
               item.type === "error" &&
               item.message.startsWith("model rerouted:")
             ) {
-              rerouteNotice ??= clip(item.message, 4096);
+              rerouteNotice ??= diagnostic(item.message);
               failed = true;
             }
+            if (item.type === "error" && item.message.trim())
+              itemError ??= diagnostic(item.message);
             if (item.type === "agent_message") {
               text = clip(item.text);
               truncated = Buffer.byteLength(item.text) > 64 * 1024;
@@ -209,7 +225,7 @@ export class CodexHarness implements Harness {
           }
           case "turn.completed": {
             const u = event.usage;
-            // Core v0.154 emits cumulative thread totals despite SDK's "during turn" comment.
+            // Core v0.159.2 emits cumulative thread totals despite SDK's "during turn" comment.
             total = {
               input:
                 u.input_tokens -
@@ -261,11 +277,12 @@ export class CodexHarness implements Harness {
           }
           case "turn.failed":
             failed = true;
-            error = event.error.message;
+            if (event.error.message.trim())
+              nativeError ??= diagnostic(event.error.message);
             break;
           case "error":
             failed = true;
-            error = event.message;
+            if (event.message.trim()) nativeError ??= diagnostic(event.message);
             break;
           default:
             break; // Unknown informational events are forward-compatible.
@@ -273,11 +290,21 @@ export class CodexHarness implements Harness {
       }
     } catch (e) {
       failed = true;
-      error = errorText(e);
+      error = diagnostic(errorText(e));
     } finally {
       request.signal.removeEventListener("abort", abortSdk);
     }
-    error = rerouteNotice ?? error;
+    const primary =
+      rerouteNotice ??
+      nativeError ??
+      (failed || !completed ? itemError : undefined);
+    if (primary)
+      error =
+        error && error !== primary
+          ? diagnostic(
+              `${diagnostic(primary, 3000)}\nSDK/invocation: ${diagnostic(error, 1000)}`,
+            )
+          : primary;
     const accounting =
       completed && !failed && !invalidScope && last
         ? last
