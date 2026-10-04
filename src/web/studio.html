@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ASF · workflow authoring</title>
+    <link rel="stylesheet" href="/ui.css" />
+    <link rel="stylesheet" href="/studio.css" />
+    <script src="/studio.js" defer></script>
+  </head>
+  <body>
+    <header>
+      <nav>
+        <a href="/">Inspect runs</a> · <strong>Author a workflow</strong>
+      </nav>
+      <h1>ASF · workflow authoring</h1>
+      <p class="caveat">
+        Edit and validate a document here. Compile, run, render, and bundle it
+        with the CLI. Local bindings, credentials, and native sessions stay
+        outside this editor.
+      </p>
+    </header>
+    <main>
+      <section class="studio-toolbar" aria-label="Document controls">
+        <button id="studio-new">New workflow</button>
+        <label
+          >Open YAML or JSON
+          <input
+            id="studio-file"
+            type="file"
+            accept=".json,.yaml,.yml,application/json"
+        /></label>
+        <button id="studio-validate">Validate</button>
+        <label
+          >Download format
+          <select id="studio-format">
+            <option value="json">JSON</option>
+            <option value="yaml">YAML</option>
+          </select></label
+        >
+        <button id="studio-download" disabled>Download document</button>
+        <span id="studio-status" role="status"
+          >Draft · validate before download</span
+        >
+      </section>
+      <p id="studio-message" role="status"></p>
+      <p id="studio-identity" class="caveat"></p>
+      <div class="studio-layout">
+        <aside class="studio-sidebar">
+          <section aria-label="Workflow definitions">
+            <h2>Definitions</h2>
+            <label
+              >Selected definition
+              <select id="studio-definition"></select
+            ></label>
+            <label
+              >Root workflow
+              <select id="studio-root"></select
+            ></label>
+            <label
+              >New child name
+              <input id="studio-child-name" placeholder="review"
+            /></label>
+            <button id="studio-add-child">Add child definition</button>
+            <p class="caveat">
+              Children are inline definitions with their own contracts and
+              default profile.
+            </p>
+          </section>
+          <section>
+            <h2>Available blocks</h2>
+            <div id="studio-catalogue" class="studio-catalogue"></div>
+          </section>
+          <details open>
+            <summary>Workflow settings</summary>
+            <form id="studio-workflow-form"></form>
+          </details>
+          <details>
+            <summary>Shared profiles</summary>
+            <label
+              >Named profile intents (JSON)
+              <textarea
+                id="studio-profiles"
+                rows="8"
+                spellcheck="false"
+              ></textarea>
+            </label>
+            <p class="caveat">
+              Instructions replace defaults. Native system instructions and
+              strict tools require trusted local bindings. Prompt prefixes are
+              advisory. New profiles use fresh context.
+            </p>
+          </details>
+        </aside>
+        <section class="studio-canvas" aria-label="Declared workflow graph">
+          <div class="studio-toolbar">
+            <h2 id="studio-graph-title">Declared workflow</h2>
+            <button id="studio-arrange">Arrange blocks</button>
+          </div>
+          <p class="caveat">
+            Edges show declared transitions. Placement is presentation only.
+            Select a block with click, Tab, or Enter. Inspect runs separately
+            for recorded execution.
+          </p>
+          <div id="studio-graph-scroll">
+            <svg
+              id="studio-graph"
+              aria-label="Workflow blocks and transitions"
+            ></svg>
+          </div>
+        </section>
+        <aside class="studio-properties">
+          <section>
+            <h2 id="studio-node-title">Selected block</h2>
+            <button id="studio-delete">Delete selected block</button>
+            <form id="studio-node-form"></form>
+            <div id="studio-child-contract"></div>
+          </section>
+        </aside>
+      </div>
+      <details open class="studio-source">
+        <summary>Canonical YAML or JSON</summary>
+        <label
+          >Workflow source
+          <textarea id="studio-source" rows="16" spellcheck="false"></textarea>
+        </label>
+        <button id="studio-apply-source">Apply source and validate</button>
+        <p class="caveat">
+          Source edits stay pending until applied. Invalid fields block
+          download. Canonical export does not preserve YAML comments or
+          formatting.
+        </p>
+      </details>
+    </main>
+  </body>
+</html>
