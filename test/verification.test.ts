@@ -264,6 +264,52 @@ test("ignored file changes do not enter the public candidate boundary", async ()
   }
 });
 
+test("bounded binary assets above the old 1 MiB limit are copied and changes stay candidate-bound", async () => {
+  const f = setup();
+  const data = Buffer.alloc(2 * 1024 * 1024);
+  try {
+    writeFileSync(join(f.repository, "public-asset.bin"), data);
+    f.git(["add", "public-asset.bin"]);
+    f.git(["commit", "--quiet", "-m", "public binary fixture"]);
+    const verifier = new CandidateVerifier({
+      repository: f.repository,
+      base: "HEAD",
+      revision: "binary-bound-v1",
+      checks: [
+        { name: "fixed", argv: [process.execPath, "-e", "process.exit(0)"] },
+      ],
+      reviewer: { harness: f.reviewer, model: "test-model", mode: "read-only" },
+    });
+    const first = await f
+      .runtime()
+      .run((r) => verifier.capture(r.scope("binary")));
+    verifyCandidate(first);
+    assert.deepEqual(
+      readFileSync(join(first.directory, "public-asset.bin")),
+      data,
+    );
+    data[data.length - 1] = 1;
+    writeFileSync(join(f.repository, "public-asset.bin"), data);
+    assert.throws(() => verifyCandidate(first), /Original candidate changed/);
+    const second = await f
+      .runtime("changed-binary")
+      .run((r) => verifier.capture(r.scope("binary")));
+    verifyCandidate(second);
+    assert.notEqual(first.identity, second.identity);
+    assert.deepEqual(
+      readFileSync(join(second.directory, "public-asset.bin")),
+      data,
+    );
+    const manifest = readFileSync(
+      join(dirname(second.directory), "manifest.json"),
+      "utf8",
+    );
+    assert.match(manifest, /binary SHA-256/);
+  } finally {
+    f.close();
+  }
+});
+
 test("fixed checks cannot accidentally discover the original ancestor Git repository", async () => {
   const f = setup(
     "const r=require('node:child_process').spawnSync('git',['rev-parse','--show-toplevel']);if(r.status===0)process.exit(8)",
@@ -539,7 +585,15 @@ test("unsafe/private files, unmerged index and oversized candidates reject captu
     (f: ReturnType<typeof setup>) =>
       writeFileSync(join(f.repository, ".env"), "private fixture"),
     (f: ReturnType<typeof setup>) =>
-      writeFileSync(join(f.repository, "large"), Buffer.alloc(1024 * 1024 + 1)),
+      writeFileSync(
+        join(f.repository, "large"),
+        Buffer.alloc(16 * 1024 * 1024 + 1),
+      ),
+    (f: ReturnType<typeof setup>) => {
+      const asset = Buffer.alloc(12 * 1024 * 1024);
+      for (const name of ["one.bin", "two.bin", "three.bin"])
+        writeFileSync(join(f.repository, name), asset);
+    },
     (f: ReturnType<typeof setup>) => {
       const blob = f.git(["rev-parse", "HEAD:source.txt"]).trim();
       f.git(

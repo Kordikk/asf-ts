@@ -26,8 +26,8 @@ import type { AgentConfig, CommandResult, Harness, Json } from "./types.js";
 import { clip, encode, hash, json, positive } from "./util.js";
 
 const MAX_FILES = 5000,
-  MAX_FILE = 1024 * 1024,
-  MAX_TOTAL = 32 * MAX_FILE;
+  MAX_FILE = 16 * 1024 * 1024,
+  MAX_TOTAL = 32 * 1024 * 1024;
 const MAX_PATCH = 16 * 1024;
 const helper = fileURLToPath(
   new URL("../scripts/verification-check.mjs", import.meta.url),
@@ -198,15 +198,15 @@ function safeBytes(path: string): Buffer {
   const fd = openSync(path, constants.O_RDONLY | constants.O_NOFOLLOW);
   try {
     const info = fstatSync(fd);
-    if (!info.isFile() || info.size > MAX_FILE)
-      throw new Error("Unsupported or oversized candidate file");
+    if (!info.isFile()) throw new Error("Unsupported candidate file type");
+    if (info.size > MAX_FILE) throw new Error("Candidate file exceeds 16 MiB");
     const parts: Buffer[] = [];
     let size = 0;
     const chunk = Buffer.alloc(65536);
     let count;
     while ((count = readSync(fd, chunk, 0, chunk.length, null)) > 0) {
       size += count;
-      if (size > MAX_FILE) throw new Error("Candidate file exceeds 1 MiB");
+      if (size > MAX_FILE) throw new Error("Candidate file exceeds 16 MiB");
       parts.push(Buffer.from(chunk.subarray(0, count)));
     }
     return Buffer.concat(parts);
@@ -233,7 +233,7 @@ function state(
     const info = lstatSync(join(repository, path));
     if (!info.isFile() && !info.isSymbolicLink())
       throw new Error("Unsupported candidate file type");
-    if (info.size > MAX_FILE) throw new Error("Candidate file exceeds 1 MiB");
+    if (info.size > MAX_FILE) throw new Error("Candidate file exceeds 16 MiB");
     const data = info.isSymbolicLink()
       ? Buffer.from(readlinkSync(join(repository, path)))
       : safeBytes(join(repository, path));
@@ -406,7 +406,8 @@ function candidatePatch(repository: string, current: Inventory): string {
       const size = Number(
         git(repository, ["cat-file", "-s", old.object]).toString(),
       );
-      if (size > MAX_FILE) throw new Error("Candidate base file exceeds 1 MiB");
+      if (size > MAX_FILE)
+        throw new Error("Candidate base file exceeds 16 MiB");
       before = git(repository, ["cat-file", "blob", old.object]);
       total += before.length;
       if (total > MAX_TOTAL) throw new Error("Candidate base exceeds 32 MiB");

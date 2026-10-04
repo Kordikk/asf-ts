@@ -14,7 +14,7 @@ Capture runs inside a reserved `Scope.local` action. It hashes tracked and nonig
 
 The ignored `.asf/verification/<identity>` artifact holds the manifest and source copy. Files are read-only; executable files remain executable. Symlinks become regular text files. Verification compares the copy with the original inventory, rather than trusting a modified snapshot manifest.
 
-Limits are 5,000 paths, 1 MiB per file, 32 MiB of current source, 256 KiB of identity metadata, and 16 KiB of serialized patch text. Private paths, submodules, unmerged indexes, unsafe path ancestors, and unsupported file types fail before review. Oversized candidates need a different explicit boundary. Ignored files are outside this boundary.
+Limits are 5,000 paths, 16 MiB per file, 32 MiB of current source, 256 KiB of identity metadata, and 16 KiB of serialized patch text. The total source bound is independent of the per-file limit. Retained binary assets can enter the frozen copy within these bounds; patch text represents them with exact hashes. Private paths, submodules, unmerged indexes, unsafe path ancestors, and unsupported file types fail before review. Oversized candidates need a different explicit boundary. Ignored files are outside this boundary.
 
 ## Check and review execution
 
