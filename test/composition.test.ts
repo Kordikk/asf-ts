@@ -387,7 +387,8 @@ test("paid global budgets remain active with child quotas", async () => {
   }
 });
 
-test("blocked preflight resumes within its original deadline and does not renew it", async () => {
+test("blocked preflight resumes within its original deadline and does not renew it", async (t) => {
+  t.mock.timers.enable({ apis: ["Date"], now: Date.now() });
   const f = fixture();
   try {
     const h = new Scripted();
@@ -404,12 +405,12 @@ test("blocked preflight resumes within its original deadline and does not renew 
     const run = () =>
       f
         .runtime()
-        .run((r) => r.workflow("delivery", d, null, { timeoutMs: 70 }));
+        .run((r) => r.workflow("delivery", d, null, { timeoutMs: 30000 }));
     await assert.rejects(run(), /not ready/);
     const first = f.store.workflowInspect("run").workflows[0]!;
     assert.equal(first.status, "blocked");
     ready = true;
-    await sleep(85);
+    t.mock.timers.tick(30001);
     await assert.rejects(run(), /deadline expired/);
     assert.equal(
       f.store.workflowInspect("run").workflows[0]!.deadline,
