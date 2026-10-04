@@ -27,6 +27,32 @@ Drag a block to move it. Focus a block with Tab, then use arrow keys for 20-unit
 
 Validate before download. Unapplied source and invalid property drafts keep download disabled. Movement changes layout only; YAML/JSON downloads retain positions and preserve semantic workflow identity. See the [modernization design](designs/studio-modernization.md) and [acceptance record](evidence/studio-modernization.md).
 
+## Personas and marketplace catalogues
+
+Open **Manage personas** in Studio. Create a named persona and set **System instructions**, instruction delivery, model, tools, mode, timeout and session intent. Choose it in **Workflow default profile** or **Node profile**. The underlying `profiles` map remains portable. **Advanced persona JSON** retains direct editing.
+
+An omitted tool selection inherits the local binding. An explicit empty selection means no requested tools; strict selection also requires the target to enforce the exact inventory. Native system delivery requires the binding to configure the exact instructions. Child workflows retain their own default.
+
+Connect a normalized catalogue through **Connect marketplace catalogue**, or start Studio with one:
+
+```sh
+npm run asf -- serve --port 8080 --persona-catalog examples/personas/catalogue.json
+```
+
+The sample contains synthetic model, tool and plugin names. Suggestions do not establish local support. A catalogue remains local discovery data; the workflow file stores only selected profile intent.
+
+Normalize a reviewed local Claude-compatible marketplace manifest. Use the exact Git revision of the repository that contains the index and its relative plugin sources:
+
+```sh
+npm run asf -- import-marketplace --file /path/to/marketplace.json --revision EXACT_40_CHARACTER_GIT_SHA --output /tmp/persona-catalogue.json
+```
+
+For an explicit metadata fetch, replace `--file` with `--source https://raw.githubusercontent.com/OWNER/REPO/EXACT_40_CHARACTER_GIT_SHA/.claude-plugin/marketplace.json`. The importer reads one bounded index and creates a new output file. It does not read plugin code. External Git sources need their own exact `sha`; optional versions and floating sources remain discovery entries.
+
+Select pinned entries in the persona form. Imported requirements that are absent from the current catalogue remain visible. Plugin selections are exact `{id, revision}` requirements. A trusted local binding must activate the matching plugins and declare the complete `capabilities.activePlugins` inventory. ASF rejects unknown inventory or any missing, extra or changed plugin before dispatch. An omitted plugin list keeps existing behavior; explicit `[]` requires a known empty inventory.
+
+See the [persona design](designs/persona-workbench.md) and [marketplace decision](adr/0206-marketplace-plugin-requirements.md).
+
 ## Recipient configuration
 
 Legacy JSON `--config` supports the current Codex/OpenCode constructors. Profiles select those named agents with conservative capabilities. Strict tools or native instructions need a preconfigured trusted binding. Use `--targets local-targets.ts` for bindings, including ADK; the module exports `bindings: Record<string, ProfileBinding>`. Import the optional ADK adapter explicitly from `src/adapters/adk.ts`; the core does not initialize it.
