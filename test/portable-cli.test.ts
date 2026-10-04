@@ -131,3 +131,67 @@ test("explicit target file source changes bind replay and generated loading reje
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test("account-free ADK example validates and executes identically through file and generated CLI", () => {
+  const dir = mkdtempSync(join(tmpdir(), "asf-ts-adk-cli-"));
+  try {
+    const source = resolve("examples/portable/adk.yaml"),
+      targets = resolve("examples/portable/adk-targets.ts"),
+      driver = join(dir, "adk.mts"),
+      db = join(dir, "store.db");
+    const report = run(["validate", "--file", source]);
+    assert.ok(report.identity);
+    run([
+      "compile",
+      "--file",
+      source,
+      "--targets",
+      targets,
+      "--output",
+      driver,
+    ]);
+    const direct = run([
+      "run-file",
+      "--file",
+      source,
+      "--targets",
+      targets,
+      "--db",
+      db,
+      "--run",
+      "direct",
+      "--input",
+      "{}",
+    ]);
+    assert.deepEqual(direct.value, { ok: true, marker: "local-adk" });
+    assert.equal(direct.passed, true);
+    const replay = run([
+      "resume-file",
+      "--file",
+      source,
+      "--targets",
+      targets,
+      "--db",
+      db,
+      "--run",
+      "direct",
+      "--input",
+      "{}",
+    ]);
+    assert.deepEqual(replay, direct);
+    const generated = run([
+      "run",
+      "--workflow",
+      driver,
+      "--db",
+      db,
+      "--run",
+      "generated",
+      "--input",
+      "{}",
+    ]);
+    assert.deepEqual(generated, direct.value);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
