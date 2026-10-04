@@ -8,6 +8,7 @@ import { readFileSync } from "node:fs";
 
 import { Store } from "./store.js";
 import { errorText } from "./util.js";
+import { buildGraphInspection } from "./portable/inspection.js";
 
 const STUDIO_BODY_LIMIT = 1024 * 1024;
 
@@ -87,6 +88,9 @@ export async function serve(store: Store, port = 0): Promise<Server> {
       ["/studio", "studio.html", "text/html; charset=utf-8"],
       ["/studio.js", "studio.js", "text/javascript; charset=utf-8"],
       ["/studio.css", "studio.css", "text/css; charset=utf-8"],
+      ["/graph", "graph.html", "text/html; charset=utf-8"],
+      ["/graph.js", "graph.js", "text/javascript; charset=utf-8"],
+      ["/graph.css", "graph.css", "text/css; charset=utf-8"],
     ].map(([route, file, type]) => [
       route,
       {
@@ -143,13 +147,28 @@ export async function serve(store: Store, port = 0): Promise<Server> {
         );
         return;
       }
-      if (url.pathname !== "/inspect" && url.pathname !== "/events") {
+      if (
+        !["/inspect", "/events", "/workflow-inspect"].includes(url.pathname)
+      ) {
         res.writeHead(404).end();
         return;
       }
       const run = url.searchParams.get("run");
       if (!run || run.length > 200) {
         res.writeHead(400).end("run required");
+        return;
+      }
+      if (url.pathname === "/workflow-inspect") {
+        res.setHeader("Content-Type", "application/json");
+        res.end(
+          JSON.stringify(
+            buildGraphInspection(store, run, {
+              offset: Number(url.searchParams.get("offset") ?? 0),
+              limit: Number(url.searchParams.get("limit") ?? 20),
+              invocationId: url.searchParams.get("invocation") ?? undefined,
+            }),
+          ),
+        );
         return;
       }
       if (url.pathname === "/inspect") {

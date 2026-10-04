@@ -1,0 +1,171 @@
+:root {
+  color-scheme: light dark;
+  font-family: system-ui, sans-serif;
+  --line: #8794a4;
+  --panel: #f0f4fb;
+  --ink: #182b43;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  padding: 24px;
+  background: #fafcff;
+  color: var(--ink);
+}
+header,
+main {
+  max-width: 1400px;
+  margin: auto;
+}
+header {
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 16px;
+}
+section {
+  margin: 24px 0;
+}
+label {
+  display: block;
+  margin: 12px 0 4px;
+  font-weight: 600;
+}
+button,
+input,
+select {
+  padding: 9px 12px;
+  font: inherit;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  max-width: 100%;
+}
+button {
+  cursor: pointer;
+  background: var(--panel);
+  color: var(--ink);
+  margin: 4px 8px 4px 0;
+}
+button:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+input,
+select {
+  min-width: min(420px, 100%);
+}
+a {
+  color: #1c55ae;
+  overflow-wrap: anywhere;
+}
+:focus-visible {
+  outline: 3px solid #d58700;
+  outline-offset: 3px;
+}
+pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  padding: 16px;
+  max-height: 600px;
+  overflow: auto;
+}
+.graph-layout {
+  display: grid;
+  grid-template-columns: minmax(400px, 2fr) minmax(250px, 1fr);
+  gap: 24px;
+}
+.graph-scroll {
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  max-height: 700px;
+  background: white;
+}
+.graph-scroll svg {
+  display: block;
+  min-width: 600px;
+}
+.graph-scroll path {
+  fill: none;
+  stroke: #8794a4;
+  stroke-width: 2;
+}
+.graph-scroll text {
+  fill: var(--ink);
+  font:
+    13px system-ui,
+    sans-serif;
+}
+.graph-scroll rect {
+  fill: var(--panel);
+  stroke: #697d9b;
+  stroke-width: 2;
+}
+.graph-scroll g[role="button"] {
+  cursor: pointer;
+}
+.graph-scroll g:focus rect {
+  stroke: #d58700;
+  stroke-width: 4;
+}
+.graph-scroll .node-failed rect,
+.graph-scroll .node-uncertain rect,
+.graph-scroll .node-cancelled rect,
+.graph-scroll .node-timeout rect {
+  fill: #ffe7e4;
+}
+.graph-scroll .node-completed rect {
+  fill: #e2f3e9;
+}
+.graph-node-button {
+  display: block;
+  width: 100%;
+  text-align: left;
+}
+.graph-child {
+  display: block;
+  margin: 8px 0;
+}
+.graph-evidence {
+  border-left: 4px solid var(--line);
+  padding-left: 16px;
+  margin-bottom: 24px;
+}
+[hidden] {
+  display: none !important;
+}
+@media (max-width: 900px) {
+  body {
+    padding: 12px;
+  }
+  .graph-layout {
+    grid-template-columns: 1fr;
+  }
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --panel: #223145;
+    --ink: #e7eef7;
+    --line: #8a9bb2;
+  }
+  body {
+    background: #142133;
+  }
+  a {
+    color: #99bcff;
+  }
+  .graph-scroll {
+    background: #142133;
+  }
+  .graph-scroll .node-completed rect {
+    fill: #1b4734;
+  }
+  .graph-scroll .node-failed rect,
+  .graph-scroll .node-uncertain rect,
+  .graph-scroll .node-cancelled rect,
+  .graph-scroll .node-timeout rect {
+    fill: #573233;
+  }
+}
