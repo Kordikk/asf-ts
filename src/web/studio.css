@@ -608,3 +608,137 @@
     transition: none !important;
   }
 }
+
+#studio-persona-dialog {
+  width: min(1040px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  box-sizing: border-box;
+  padding: 0;
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid var(--control-line);
+  border-radius: 16px;
+  overflow: auto;
+  box-shadow: 0 24px 100px #0009;
+}
+#studio-persona-dialog::backdrop {
+  background: #050b16cc;
+}
+.studio-persona-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 16px;
+  padding: 20px;
+  border-bottom: 1px solid var(--line);
+}
+.studio-persona-header h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 750;
+}
+.studio-persona-header .studio-hint {
+  margin-bottom: 0;
+}
+.studio-persona-header button {
+  margin: 0;
+}
+.studio-persona-layout {
+  display: grid;
+  grid-template-columns: 236px minmax(0, 1fr);
+}
+.studio-persona-library,
+.studio-persona-settings {
+  padding: 20px;
+  min-width: 0;
+}
+.studio-persona-library {
+  background: #101927;
+  border-right: 1px solid var(--line);
+}
+#studio-persona-dialog label {
+  display: block;
+  margin: 12px 0 6px;
+  color: #bdc9dc;
+  font-size: 13px;
+  font-weight: 650;
+}
+#studio-persona-dialog input:not([type="checkbox"]):not([type="file"]),
+#studio-persona-dialog select,
+#studio-persona-dialog textarea {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 6px 0 0;
+  min-width: 0;
+}
+#studio-persona-dialog textarea {
+  min-height: 100px;
+  padding: 12px;
+  border: 1px solid var(--control-line);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--ink);
+  font:
+    13px/1.6 ui-monospace,
+    monospace;
+  resize: vertical;
+}
+#studio-persona-dialog fieldset {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  margin: 16px 0;
+  padding: 12px;
+}
+#studio-persona-dialog legend {
+  color: var(--ink);
+  font-weight: 700;
+}
+#studio-persona-dialog label:has(input[type="checkbox"]) {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+#studio-persona-dialog input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  accent-color: var(--accent);
+}
+#studio-persona-list {
+  min-height: 176px;
+}
+.studio-persona-library button,
+.studio-persona-library .studio-file-control {
+  width: 100%;
+  box-sizing: border-box;
+  text-align: center;
+}
+.studio-persona-identity {
+  border-top: 1px solid var(--line);
+  margin-top: 20px;
+  padding-top: 8px;
+}
+#studio-persona-message {
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+#studio-persona-message:empty {
+  display: none;
+}
+@media (max-width: 700px) {
+  .studio-persona-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .studio-persona-library {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .studio-persona-header,
+  .studio-persona-library,
+  .studio-persona-settings {
+    padding: 14px;
+  }
+}
