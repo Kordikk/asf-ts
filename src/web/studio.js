@@ -69,6 +69,7 @@ function studioDirty() {
   studioButton("studio-download").disabled = true;
   studioElement("studio-status").textContent =
     "Draft · validate before download";
+  studioElement("studio-status").dataset.state = "draft";
 }
 function studioDefinition() {
   return studioState.document.workflows[studioState.workflow];
@@ -1198,7 +1199,25 @@ function studioRenderCatalogue() {
   area.replaceChildren();
   for (const contract of studioState.catalogue) {
     const button = studioText("button");
+    const icon = studioSVG("svg", {
+      viewBox: "0 0 24 24",
+      width: 24,
+      height: 24,
+      class: "studio-icon",
+      "aria-hidden": true,
+    });
+    icon.append(
+      studioSVG("path", {
+        d: studioIcons[contract.kind] ?? studioIcons.custom,
+        fill: "none",
+        stroke: "currentColor",
+        "stroke-width": 1.7,
+        "stroke-linecap": "round",
+        "stroke-linejoin": "round",
+      }),
+    );
     button.append(
+      icon,
       studioText("strong", contract.label),
       studioText("small", contract.description),
     );
@@ -1372,6 +1391,7 @@ async function studioValidate() {
         ? studioControl("studio-source").value
         : studioJSON(studioState.document);
     studioElement("studio-status").textContent = "Validating…";
+    studioElement("studio-status").dataset.state = "validating";
     studioButton("studio-download").disabled = true;
     const response = await fetch("/studio/validate", {
       method: "POST",
@@ -1393,6 +1413,7 @@ async function studioValidate() {
     studioState.validated = revision;
     studioButton("studio-download").disabled = false;
     studioElement("studio-status").textContent = "Document valid";
+    studioElement("studio-status").dataset.state = "valid";
     studioElement("studio-identity").textContent =
       `Semantic identity ${result.identity}`;
     studioNotice(
