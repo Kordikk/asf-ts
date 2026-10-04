@@ -242,20 +242,25 @@ function project(
     let amount: number | null = null,
       unresolved = 0;
     for (const row of receipts) {
+      let malformed = false;
       try {
         const accounting = parse<Accounting>(row.accounting);
         validateAccounting(accounting);
         const known = knownUsd(accounting);
         if (known !== null) amount = (amount ?? 0) + known;
       } catch {
-        /* Malformed evidence stays unresolved; UI retains the encoded bytes. */
+        malformed = true;
       }
       const unresolvedRow = store.db
         .prepare(
           "SELECT CASE WHEN l.complete=1 AND i.status!='uncertain' AND NOT EXISTS(SELECT 1 FROM reports p WHERE p.invocation=i.id AND json_extract(p.data,'$.status')='incomplete') THEN 0 ELSE 1 END AS unresolved FROM invocations i LEFT JOIN ledger l ON l.invocation=i.id WHERE i.id=? AND i.run=?",
         )
         .get(row.id, run);
-      unresolved += Number(unresolvedRow?.unresolved ?? 1);
+      // Count each receipt once, even when its payload and persisted flags disagree.
+      unresolved += Math.max(
+        malformed ? 1 : 0,
+        Number(unresolvedRow?.unresolved ?? 1),
+      );
     }
     return {
       id: owned.id,

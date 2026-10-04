@@ -118,6 +118,37 @@ test("partial workflow/action windows keep source independent and verify off-pag
   }
 });
 
+test("malformed ledger payloads stay unresolved despite a completed scalar flag", async () => {
+  const f = await recordedGraph();
+  try {
+    const child = buildGraphInspection(f.store, "run").graphs[1]!;
+    const invocation = child.nodes.find(
+      (node) => node.source.id === "judgement",
+    )!.actions[0]!.nativeInvocationIds[0]!;
+    // This fixture models corrupt retained data, not a supported ledger mutation.
+    f.store.db.exec("DROP TRIGGER ledger_immutable");
+    f.store.db
+      .prepare("UPDATE ledger SET data=? WHERE invocation=?")
+      .run('{"status":"complete","usd":"malformed"}', invocation);
+    const action = () =>
+      buildGraphInspection(f.store, "run").graphs[1]!.nodes.find(
+        (node) => node.source.id === "judgement",
+      )!.actions[0]!;
+    assert.equal(action().unresolved, 1);
+    assert.equal(action().knownUsd, 0.001);
+    f.store.db
+      .prepare("UPDATE invocations SET status='uncertain' WHERE id=?")
+      .run(invocation);
+    assert.equal(
+      action().unresolved,
+      1,
+      "Invalid payload and uncertain flags count the same receipt once",
+    );
+  } finally {
+    f.close();
+  }
+});
+
 test("failed native work retains partial cost without an approved child or terminal node", async () => {
   const f = fixture();
   try {
