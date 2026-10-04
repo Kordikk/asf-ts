@@ -1,0 +1,152 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { mkdtempSync, writeFileSync, rmSync, mkdirSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { portableFixture } from "./portable-fixtures.js";
+import {
+  loadDocument,
+  bundleDocument,
+  verifyBundle,
+  renderDocument,
+  compileDocument,
+  loadRegistration,
+  loadTargetBindings,
+  bytesHash,
+} from "../src/portable/files.js";
+import { validateDocument } from "../src/portable/validation.js";
+test("bundle closure verifies without extraction and detects changed source, render and report", () => {
+  const doc = portableFixture(),
+    bundle = bundleDocument(doc);
+  assert.equal(bundle, bundleDocument(doc));
+  assert.equal(verifyBundle(bundle).identity, validateDocument(doc).identity);
+  for (const mutate of [
+    (b: Record<string, unknown>) => (b.workflowIdentity = "wrong"),
+    (b: Record<string, unknown>) => (b.support = {}),
+    (b: Record<string, unknown>) => {
+      const m = b.members as Record<string, { data: string }>;
+      m["workflow.svg"]!.data = "tampered";
+    },
+    (b: Record<string, unknown>) => {
+      const m = b.members as Record<string, unknown>;
+      m["../../escape"] = { data: "x", sha256: "x" };
+    },
+  ]) {
+    const b = JSON.parse(bundle) as Record<string, unknown>;
+    mutate(b);
+    assert.throws(() => verifyBundle(JSON.stringify(b)));
+  }
+});
+test("renderer escapes labels and generated ASF driver freezes complete source without bindings", () => {
+  const doc = portableFixture();
+  doc.workflows.review!.version = '<script>alert("x")</script>';
+  const svg = renderDocument(doc);
+  assert.ok(svg.includes("&lt;script&gt;"));
+  assert.ok(!svg.includes("<script>"));
+  const source = compileDocument(doc);
+  assert.ok(source.includes("executeDocument"));
+  assert.ok(source.includes("verification") === false);
+  assert.ok(source.includes("review"));
+  assert.ok(!source.includes("apiKey"));
+});
+test("CLI closure loader resolves local definitions and rejects escape, cycles and duplicates", () => {
+  const dir = mkdtempSync(join(tmpdir(), "asf-ts-files-"));
+  try {
+    const doc = portableFixture(),
+      review = doc.workflows.review!;
+    delete doc.workflows.review;
+    writeFileSync(
+      join(dir, "root.json"),
+      JSON.stringify({ ...doc, imports: ["child.json"] }),
+    );
+    writeFileSync(
+      join(dir, "child.json"),
+      JSON.stringify({
+        format: doc.format,
+        root: "review",
+        workflows: { review },
+      }),
+    );
+    assert.equal(
+      loadDocument(join(dir, "root.json")).document.workflows.review!.version,
+      "1",
+    );
+    writeFileSync(
+      join(dir, "root.json"),
+      JSON.stringify({ ...doc, imports: ["../outside.json"] }),
+    );
+    assert.throws(() => loadDocument(join(dir, "root.json")), /imports/);
+    writeFileSync(
+      join(dir, "root.json"),
+      JSON.stringify({ ...doc, imports: ["root.json"] }),
+    );
+    assert.throws(() => loadDocument(join(dir, "root.json")), /cycle/);
+    mkdirSync(join(dir, "sub"));
+    writeFileSync(
+      join(dir, "root.json"),
+      JSON.stringify({ ...doc, imports: ["child.json", "child.json"] }),
+    );
+    assert.throws(() => loadDocument(join(dir, "root.json")), /Duplicate/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("trusted module entry changes use matching exports and raw byte identities", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "asf-ts-modules-"));
+  try {
+    const path = join(dir, "component.mjs");
+    const source = (n: number) =>
+      `export const components={value:{identity:{revision:${n}},inputSchema:{},outputSchema:{},readOnly:true,run:async()=>${n}}};export const bindings={value:{agent:{marker:${n}},capabilities:{revision:"${n}"}}};`;
+    writeFileSync(path, source(1));
+    const first = await loadRegistration(path);
+    const target1 = await loadTargetBindings(path);
+    writeFileSync(path, source(2));
+    const second = await loadRegistration(path, bytesHash(source(2)));
+    const target2 = await loadTargetBindings(path, bytesHash(source(2)));
+    // Access the trusted loader without invoking any agent or provider.
+    assert.equal(
+      (first.value!.identity as { declared: { revision: number } }).declared
+        .revision,
+      1,
+    );
+    assert.equal(
+      (second.value!.identity as { declared: { revision: number } }).declared
+        .revision,
+      2,
+    );
+    assert.notEqual(
+      target1.value!.capabilities.revision,
+      target2.value!.capabilities.revision,
+    );
+    assert.equal(
+      (target2.value!.agent as unknown as { marker: number }).marker,
+      2,
+    );
+    await assert.rejects(
+      loadRegistration(path, bytesHash(source(1))),
+      /source changed/,
+    );
+    await assert.rejects(
+      loadTargetBindings(path, bytesHash(source(1))),
+      /source changed/,
+    );
+    assert.notEqual(
+      bytesHash(Uint8Array.of(255)),
+      bytesHash(Uint8Array.of(254)),
+    );
+    const changing = join(dir, "changing.mjs");
+    writeFileSync(
+      changing,
+      `import {writeFileSync} from "node:fs"; writeFileSync(new URL(import.meta.url), "export const components={};export const bindings={};");export const components={};export const bindings={};`,
+    );
+    await assert.rejects(loadRegistration(changing), /changed during import/);
+    writeFileSync(
+      changing,
+      `import {writeFileSync} from "node:fs"; writeFileSync(new URL(import.meta.url), "export const bindings={};");export const bindings={};`,
+    );
+    await assert.rejects(loadTargetBindings(changing), /changed during import/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});

@@ -1,8 +1,12 @@
 # ASF TypeScript workflow core
 
-Small SDK-first workflow runtime for **Node 22.22.x / Linux**. Ordinary async TypeScript, explicit durable actions, native sessions, bounded JSON correction, commands, and parallel scopes. This is an independent implementation, not Python ASF parity.
+Small SDK-first workflow runtime for **Node 22.22.x / Linux**. Ordinary async TypeScript, explicit durable actions, native sessions, bounded JSON correction, commands, and parallel scopes. This is an independent implementation with optional portable workflow authoring.
 
 **Accounting is mandatory; content tracing is optional.** Costs are scoped estimates, not invoices. Unknown/failed accounting blocks further model dispatch. An uncertain send is never automatically repeated.
+
+## Portable authoring and composition
+
+Portable YAML/JSON, typed child workflows, profiles, file-driven TypeScript generation, rendering, bundles, and an optional Google ADK proof build on the existing durable runtime. The local UI preserves its execution inspector and adds document authoring. Generation and execution stay in the CLI/library. See the [portable guide](docs/portable.md), [port design](docs/designs/ts-port.md), and [decisions](docs/adr).
 
 ## Run offline
 
@@ -88,7 +92,7 @@ Uses pinned Playwright/Chromium and an actual `recordVideo` browser context agai
 
 Artifacts (overwritten on reproduction): `.asf/ui-verification/workflow-ui.webm` and `workflow-ui.png`. Database fixtures are retained in their unique directories; these ignored artifacts are not committed.
 
-[Verification results](docs/verification.md): Codex passed five live turns covering tools, native continuation, writing, and same-session correction; replay sent no new requests. OpenCode historically also passed five live ASF turns and account-free replay on the explicitly authorized `opencode-go/gpt-5.6-luna` route, with real tools, native continuation/correction and complete **declared-scope estimates**. Private API-key provisioning is opt-in; global auth is not imported or changed. The earlier free-route HTTP 403 and its unresolved accounting remain preserved, and no invoice-completeness claim is made. No Claude/Cursor adapters, councils, executable workflow graph, broker, or automatic uncertain-send reconciliation are included.
+[Verification results](docs/verification.md): Codex passed five live turns covering tools, native continuation, writing, and same-session correction; replay sent no new requests. OpenCode historically also passed five live ASF turns and account-free replay on the explicitly authorized `opencode-go/gpt-5.6-luna` route, with real tools, native continuation/correction and complete **declared-scope estimates**. Private API-key provisioning is opt-in; global auth is not imported or changed. The earlier free-route HTTP 403 and its unresolved accounting remain preserved, and no invoice-completeness claim is made. Portable graphs now lower into the same durable Runtime. No additional agentic frameworks or automatic uncertain-send reconciliation are included.
 
 ### Separately authorized real Codex recording
 
