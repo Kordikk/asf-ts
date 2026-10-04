@@ -42,6 +42,6 @@ Recorded replay events are counted for their exact workflow or action ID. Parent
 
 ## Validation
 
-Unit fixtures execute actual portable lowering through Runtime. They cover nested negative results, source identity, correction receipts, replay, partial windows, repeat/parallel links, custom inner namespaces, mismatched IDs/kinds, corrupted source, concurrent commits, focused paging, and original v1 stores. Browser acceptance uses account-free recorded fixtures to check keyboard drill-down, exact receipt IDs, source escaping, replay, negative verdicts, pagination, legacy fallback, and GET-only requests. Production HTTP wiring remains a separate integration step.
+Unit fixtures execute actual portable lowering through Runtime. They cover nested negative results, source identity, correction receipts, replay, partial windows, repeat/parallel links, custom inner namespaces, mismatched IDs/kinds, corrupted source, concurrent commits, focused paging, and original v1 stores. Browser acceptance uses account-free recorded fixtures to check keyboard drill-down, exact receipt IDs, source escaping, replay, negative verdicts, pagination, legacy fallback, and GET-only requests. The production HTTP routes serve the same assets from source and built output. See the [recorded browser evidence](../evidence/declared-inspection.md).
 
 Plans: [declared inspection](../plans/declared-inspection.md), [editor and inspection](../plans/editor-and-inspection.md), [portable files](../plans/portable-files.md).
