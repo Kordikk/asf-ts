@@ -122,6 +122,34 @@ test("catalogue validates bounded discovery data independently of loaded binding
     assert.throws(() => parsePersonaCatalogue(invalid));
 });
 
+test("canonical URL expansion and normalized whole-catalogue size obey the same reload bounds", () => {
+  const catalogue = (sources: string[]) => ({
+    ...emptyPersonaCatalogue(),
+    plugins: sources.map((source, i) => ({
+      id: `market/plugin${i}`,
+      name: "Plugin",
+      source,
+    })),
+  });
+  assert.throws(
+    () =>
+      parsePersonaCatalogue(
+        catalogue(["https://example.com/" + "é".repeat(1000)]),
+      ),
+    /Catalogue source/,
+  );
+  const normalized = parsePersonaCatalogue(
+    catalogue(["https://example.com/" + "é".repeat(100)]),
+  );
+  assert.ok(Buffer.byteLength(normalized.plugins[0]!.source!) <= 2048);
+  assert.deepEqual(parsePersonaCatalogue(normalized), normalized);
+  const many = catalogue(
+    Array.from({ length: 512 }, () => "https://example.com/" + "é".repeat(333)),
+  );
+  assert.ok(Buffer.byteLength(JSON.stringify(many)) < PERSONA_CATALOGUE_LIMIT);
+  assert.throws(() => parsePersonaCatalogue(many), /exceeds 1 MiB/);
+});
+
 test("Claude projection retains exact pins but never imports components or treats versions as pins", () => {
   const parsed = importClaudeMarketplace(marketplace(), {
     revision: pin,

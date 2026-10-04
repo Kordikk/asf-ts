@@ -72,10 +72,11 @@ function sourceUrl(value: unknown): string {
     url.password ||
     url.search ||
     url.hash ||
-    url.port
+    url.port ||
+    Buffer.byteLength(url.href) > 2048
   )
     throw new Error(
-      "Catalogue source requires an HTTPS URL without credentials, query or fragment",
+      "Catalogue source requires an HTTPS URL without credentials, query or fragment, within 2048 canonical URL bytes",
     );
   return url.href;
 }
@@ -157,6 +158,7 @@ export function parsePersonaCatalogue(value: unknown): PersonaCatalogue {
         : { source: sourceUrl(marketplace.source) }),
     };
   }
+  bounded(result);
   return result;
 }
 
