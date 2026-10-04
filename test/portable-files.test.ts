@@ -10,6 +10,9 @@ import {
   verifyBundle,
   renderDocument,
   compileDocument,
+  loadRegistration,
+  loadTargetBindings,
+  bytesHash,
 } from "../src/portable/files.js";
 import { validateDocument } from "../src/portable/validation.js";
 test("bundle closure verifies without extraction and detects changed source, render and report", () => {
@@ -84,6 +87,65 @@ test("CLI closure loader resolves local definitions and rejects escape, cycles a
       JSON.stringify({ ...doc, imports: ["child.json", "child.json"] }),
     );
     assert.throws(() => loadDocument(join(dir, "root.json")), /Duplicate/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("trusted module entry changes use matching exports and raw byte identities", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "asf-ts-modules-"));
+  try {
+    const path = join(dir, "component.mjs");
+    const source = (n: number) =>
+      `export const components={value:{identity:{revision:${n}},inputSchema:{},outputSchema:{},readOnly:true,run:async()=>${n}}};export const bindings={value:{agent:{marker:${n}},capabilities:{revision:"${n}"}}};`;
+    writeFileSync(path, source(1));
+    const first = await loadRegistration(path);
+    const target1 = await loadTargetBindings(path);
+    writeFileSync(path, source(2));
+    const second = await loadRegistration(path, bytesHash(source(2)));
+    const target2 = await loadTargetBindings(path, bytesHash(source(2)));
+    // Access the trusted loader without invoking any agent or provider.
+    assert.equal(
+      (first.value!.identity as { declared: { revision: number } }).declared
+        .revision,
+      1,
+    );
+    assert.equal(
+      (second.value!.identity as { declared: { revision: number } }).declared
+        .revision,
+      2,
+    );
+    assert.notEqual(
+      target1.value!.capabilities.revision,
+      target2.value!.capabilities.revision,
+    );
+    assert.equal(
+      (target2.value!.agent as unknown as { marker: number }).marker,
+      2,
+    );
+    await assert.rejects(
+      loadRegistration(path, bytesHash(source(1))),
+      /source changed/,
+    );
+    await assert.rejects(
+      loadTargetBindings(path, bytesHash(source(1))),
+      /source changed/,
+    );
+    assert.notEqual(
+      bytesHash(Uint8Array.of(255)),
+      bytesHash(Uint8Array.of(254)),
+    );
+    const changing = join(dir, "changing.mjs");
+    writeFileSync(
+      changing,
+      `import {writeFileSync} from "node:fs"; writeFileSync(new URL(import.meta.url), "export const components={};export const bindings={};");export const components={};export const bindings={};`,
+    );
+    await assert.rejects(loadRegistration(changing), /changed during import/);
+    writeFileSync(
+      changing,
+      `import {writeFileSync} from "node:fs"; writeFileSync(new URL(import.meta.url), "export const bindings={};");export const bindings={};`,
+    );
+    await assert.rejects(loadTargetBindings(changing), /changed during import/);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

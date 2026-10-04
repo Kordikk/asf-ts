@@ -33,11 +33,11 @@ Profiles resolve before any node dispatch. Workflow defaults belong to that work
 
 ## Semantics and limits
 
-Schemas default to draft-07; explicit2020-12 is supported. References select guaranteed input or earlier node data on every incoming path. Structural comparisons reject known contradictions and unsupported schema transformations; identical advanced schemas still validate their actual boundary values. Branch/end records are durable. Native failure, uncertain sends, cancelled commands and malformed typed values stop execution. Successful domain rejection remains data.
+Schemas default to draft-07; explicit 2020-12 is supported. References select guaranteed input or earlier node data on every incoming path. Structural comparisons reject known contradictions and unsupported schema transformations; identical advanced schemas still validate their actual boundary values. Branch/end records are durable. Native failure, uncertain sends, cancelled commands and malformed typed values stop execution. Successful domain rejection remains data.
 
 Repeat is finite. Its input is selected from the parent context for every iteration; stateful repair code must capture the new candidate explicitly. All/any parallel joins wait for all started children; failure cancels and drains siblings. Concurrent commands/writers/effectful components require isolation and are rejected in v1.
 
-Source/closed document:1MiB; closure loader:64 local files/4MiB total; definitions:64; nodes/definition:128; schema:16KiB; repeats:100; parallel branches:16. Runtime inputs, prompts, raw receipts and outputs also have their documented core bounds. Child dispatch limits count ASF sends/corrections; native internal inference/tool loops require their own adapter bounds. Deadlines and quotas persist across resume.
+Source/closed document: 1 MiB; closure loader: 64 local files/4 MiB total; definitions: 64; nodes/definition: 128; schema: 16 KiB; repeats: 100; parallel branches: 16. Runtime inputs, prompts, raw receipts and outputs also have their documented core bounds. Child dispatch limits count ASF sends/corrections; native internal inference/tool loops require their own adapter bounds. Deadlines and quotas persist across resume.
 
 Layout-only edits preserve semantic file execution identity. Generated drivers embed the source and use the same executor; the ordinary module CLI still binds the complete generated entry bytes and path. Regenerating that module with changed presentation bytes requires a new module run. Native full-workflow export is unsupported; a driver retains ASF durability and accounting.
 

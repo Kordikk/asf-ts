@@ -10,7 +10,7 @@ import {
   DOCUMENT_LIMIT,
 } from "./validation.js";
 import type { WorkflowDocument, ValidatedWorkflow } from "./model.js";
-export const bytesHash = (text: string): string =>
+export const bytesHash = (text: string | Uint8Array): string =>
   createHash("sha256").update(text).digest("hex");
 /** Only the explicit CLI loader resolves local imports. Shared documents are closed. */
 export function loadDocument(path: string): ValidatedWorkflow {
@@ -204,7 +204,7 @@ export function compileDocument(
     registration = options.registration
       ? {
           path: realpathSync(options.registration),
-          sha256: bytesHash(readFileSync(options.registration, "utf8")),
+          sha256: bytesHash(readFileSync(options.registration)),
         }
       : null;
   if (
@@ -219,7 +219,7 @@ export function compileDocument(
   const targets = options.targets
     ? {
         path: realpathSync(options.targets),
-        sha256: bytesHash(readFileSync(options.targets, "utf8")),
+        sha256: bytesHash(readFileSync(options.targets)),
       }
     : null;
   const runtime =
@@ -227,27 +227,38 @@ export function compileDocument(
     fileURLToPath(new URL("./index.js", import.meta.url));
   return `// Generated ASF-TS driver. Source identity: ${v.identity}\n// Registration/target modules are separately trusted code.\nimport { executeDocument, bindingsFromAgents, loadRegistration, loadTargetBindings, type Runtime, type Json, type AgentConfig, type WorkflowDocument } from ${JSON.stringify(runtime)};\nconst document: WorkflowDocument = ${JSON.stringify(v.document, null, 2)};\nconst registration = ${JSON.stringify(registration)} as {path:string;sha256:string}|null;\nconst targets = ${JSON.stringify(targets)} as {path:string;sha256:string}|null;\nexport async function workflow(runtime: Runtime, input: Json, agents: Record<string, AgentConfig>): Promise<Json> {\n  const components = registration ? await loadRegistration(registration.path, registration.sha256) : {};\n  const bindings = targets ? await loadTargetBindings(targets.path, targets.sha256) : bindingsFromAgents(agents);\n  try { return (await executeDocument(runtime, document, input, {bindings,components})).value; }\n  finally { if (targets) await Promise.allSettled([...new Set(Object.values(bindings).map(b=>b.agent.harness))].map(h=>h.close?.())); }\n}\n`;
 }
+/** Bind the entry cache key and identity to the same bytes; transitive code is caller-versioned. */
+async function loadTrustedEntry(
+  path: string,
+  expectedSha256: string | undefined,
+  label: string,
+): Promise<{ module: unknown; source: string }> {
+  const actual = realpathSync(path),
+    source = bytesHash(readFileSync(actual));
+  if (expectedSha256 && source !== expectedSha256)
+    throw new Error(`Trusted ${label} source changed`);
+  const url = pathToFileURL(actual);
+  url.searchParams.set("asf-source", source);
+  const module: unknown = await import(url.href);
+  if (bytesHash(readFileSync(actual)) !== source)
+    throw new Error(`Trusted ${label} source changed during import`);
+  return { module, source };
+}
 /** Called only after explicit file-run/compiler authorization, never parse/render/UI. */
 export async function loadRegistration(
   path: string,
   expectedSha256?: string,
 ): Promise<Record<string, import("./execute.js").Component>> {
-  const actual = realpathSync(path);
-  if (
-    expectedSha256 &&
-    bytesHash(readFileSync(actual, "utf8")) !== expectedSha256
-  )
-    throw new Error("Trusted registration source changed");
-  const module = (await import(pathToFileURL(actual).href)) as {
+  const loaded = await loadTrustedEntry(path, expectedSha256, "registration");
+  const module = loaded.module as {
     components?: Record<string, import("./execute.js").Component>;
   };
   if (!module.components || typeof module.components !== "object")
     throw new Error("Registration module must export components");
-  const source = bytesHash(readFileSync(actual, "utf8"));
   return Object.fromEntries(
     Object.entries(module.components).map(([name, c]) => [
       name,
-      { ...c, identity: { declared: c.identity, source } },
+      { ...c, identity: { declared: c.identity, source: loaded.source } },
     ]),
   );
 }
@@ -256,11 +267,8 @@ export async function loadTargetBindings(
   path: string,
   expectedSha256?: string,
 ): Promise<Record<string, import("../profiles.js").ProfileBinding>> {
-  const actual = realpathSync(path),
-    source = bytesHash(readFileSync(actual, "utf8"));
-  if (expectedSha256 && source !== expectedSha256)
-    throw new Error("Trusted target source changed");
-  const module = (await import(pathToFileURL(actual).href)) as {
+  const loaded = await loadTrustedEntry(path, expectedSha256, "target");
+  const module = loaded.module as {
     bindings?: Record<string, import("../profiles.js").ProfileBinding>;
   };
   if (!module.bindings || typeof module.bindings !== "object")
@@ -272,7 +280,7 @@ export async function loadTargetBindings(
         ...b,
         capabilities: {
           ...b.capabilities,
-          revision: `${b.capabilities.revision}:source-${source}`,
+          revision: `${b.capabilities.revision}:source-${loaded.source}`,
         },
       },
     ]),
