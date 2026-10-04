@@ -31,7 +31,7 @@ Drag uses transient geometry until completion. New/imported documents and defini
 
 ## Visual and accessibility rules
 
-Use readable dark surfaces, explicit boundaries and larger primary titles. Label true/false ports. Use kind names and icons alongside color. Retain native controls and visible focus. Pointer controls target 44 pixels where space permits; this exceeds the [WCAG minimum target criterion](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html). Direction buttons provide an alternative to dragging. Do not claim a complete accessibility certification from these focused checks.
+Use readable dark surfaces, explicit boundaries and larger primary titles. Keep definition selection visible; collapse root/child management to give the block library more space on short screens. Label true/false ports. Use kind names and icons alongside color. Retain native controls and visible focus. Pointer controls target 44 pixels where space permits; this exceeds the [WCAG minimum target criterion](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html). Direction buttons provide an alternative to dragging. Do not claim a complete accessibility certification from these focused checks.
 
 No external fonts, images or UI packages are required. Imported labels remain literal text. The browser still performs only bounded local reads and document validation; it has no generation, execution, provider or server-file-path operation.
 

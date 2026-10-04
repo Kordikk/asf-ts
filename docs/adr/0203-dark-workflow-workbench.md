@@ -6,7 +6,7 @@ The user finds the light pages, weak section titles and uniform block shapes con
 
 ## Decision
 
-Use shared dark color tokens on all three pages, regardless of the operating-system preference. Give headings, controls, panels and selected states a consistent hierarchy. Studio separates the definition library, canvas and block properties. Distinguish block kinds with shape, icon, text and accent color. Keep advanced source editing collapsed until needed. Use local system fonts and existing static assets.
+Use shared dark color tokens on all three pages, regardless of the operating-system preference. Give headings, controls, panels and selected states a consistent hierarchy. Studio separates the definition library, canvas and block properties. Distinguish block kinds with shape, icon, text and accent color. Keep definition management and advanced source editing collapsed until needed; keep definition selection visible. Use local system fonts and existing static assets.
 
 ## Why
 
