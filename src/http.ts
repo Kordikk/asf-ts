@@ -112,6 +112,11 @@ export async function serve(
       ["/ui.css", "ui.css", "text/css; charset=utf-8"],
       ["/studio", "studio.html", "text/html; charset=utf-8"],
       ["/studio.js", "studio.js", "text/javascript; charset=utf-8"],
+      [
+        "/persona-editor.js",
+        "persona-editor.js",
+        "text/javascript; charset=utf-8",
+      ],
       ["/studio.css", "studio.css", "text/css; charset=utf-8"],
       ["/graph", "graph.html", "text/html; charset=utf-8"],
       ["/graph.js", "graph.js", "text/javascript; charset=utf-8"],

@@ -7,6 +7,7 @@
     <title>ASF · Workflow Studio</title>
     <link rel="stylesheet" href="/ui.css" />
     <link rel="stylesheet" href="/studio.css" />
+    <script src="/persona-editor.js" defer></script>
     <script src="/studio.js" defer></script>
   </head>
   <body class="studio-page">
@@ -28,8 +29,9 @@
     <main>
       <section class="studio-document-bar" aria-label="Document controls">
         <div class="studio-toolbar-group">
-          <button id="studio-new">New workflow</button
-          ><label class="studio-file-control"
+          <button id="studio-new">New workflow</button>
+          <button id="studio-persona-open">Manage personas</button>
+          <label class="studio-file-control"
             >Open YAML or JSON<input
               id="studio-file"
               type="file"
@@ -83,7 +85,7 @@
             <form id="studio-workflow-form"></form>
           </details>
           <details class="studio-panel">
-            <summary>Shared profiles</summary>
+            <summary>Advanced persona JSON</summary>
             <label
               >Named profile intents (JSON)<textarea
                 id="studio-profiles"
@@ -92,8 +94,8 @@
               ></textarea>
             </label>
             <p class="studio-hint">
-              Profiles belong to their workflow. A child can use its own
-              default.
+              Named personas can be shared by workflows and agent nodes. Each
+              child workflow uses its own default.
             </p>
           </details>
         </aside>
@@ -199,6 +201,61 @@
         Export a validated YAML or JSON document. Compile, run, render, and
         bundle it with the ASF CLI.
       </footer>
+      <dialog id="studio-persona-dialog" aria-labelledby="studio-persona-title">
+        <header class="studio-persona-header">
+          <div>
+            <p class="studio-eyebrow">AGENT CONFIGURATION</p>
+            <h2 id="studio-persona-title">Personas</h2>
+            <p class="studio-hint">
+              Reuse personas through workflow defaults and Agent block profiles.
+            </p>
+          </div>
+          <button id="studio-persona-close" type="button">Close</button>
+        </header>
+        <div class="studio-persona-layout">
+          <aside class="studio-persona-library" aria-label="Persona library">
+            <label for="studio-persona-list">Selected persona</label>
+            <select id="studio-persona-list" size="6"></select>
+            <label for="studio-persona-new-name">New persona name</label>
+            <input id="studio-persona-new-name" placeholder="reviewer" />
+            <button id="studio-persona-add" type="button">
+              Create persona
+            </button>
+            <label class="studio-file-control"
+              >Connect marketplace catalogue<input
+                id="studio-persona-catalogue-file"
+                type="file"
+                accept=".json,application/json"
+              />
+            </label>
+            <p class="studio-hint">
+              Catalogue entries are available choices. Selected plugins must be
+              active in the local agent before execution.
+            </p>
+          </aside>
+          <section
+            class="studio-persona-settings"
+            aria-label="Persona settings"
+          >
+            <p id="studio-persona-message" role="status"></p>
+            <form id="studio-persona-form"></form>
+            <div class="studio-persona-identity">
+              <label for="studio-persona-rename-name">Rename persona</label>
+              <input id="studio-persona-rename-name" />
+              <div class="studio-toolbar-group">
+                <button id="studio-persona-rename" type="button">Rename</button>
+                <button
+                  id="studio-persona-delete"
+                  type="button"
+                  class="studio-danger"
+                >
+                  Delete persona
+                </button>
+              </div>
+            </div>
+          </section>
+        </div>
+      </dialog>
     </main>
   </body>
 </html>

@@ -5,7 +5,7 @@
 /** @typedef {{format:string,root:string,workflows:Record<string,StudioDefinition>,profiles?:unknown}} StudioDocument */
 /** @typedef {HTMLInputElement|HTMLTextAreaElement|HTMLSelectElement} StudioControl */
 /** @typedef {{control:StudioControl,type:string,change:(value:unknown)=>void,label:string,optional:boolean}} StudioDraft */
-/** @typedef {{values?:string[],optional?:boolean,min?:number,max?:number,label?:string}} StudioFieldOptions */
+/** @typedef {{values?:string[],optional?:boolean,allowEmpty?:boolean,min?:number,max?:number,label?:string}} StudioFieldOptions */
 /** @param {string} id @returns {HTMLElement} */
 const studioElement = (id) => {
   const element = document.getElementById(id);
@@ -56,10 +56,20 @@ const studioState = {
   yaml: "",
   catalogue: [],
 };
+/** @type {ReturnType<typeof createPersonaEditor>|null} */
+let studioPersonas = null;
+/** Profile object names let advanced JSON rebind surviving field drafts. */
+/** @type {Map<object,string>} */
+const studioPersonaOwners = new Map();
 /** @param {string} text @param {string} [kind] */
 function studioNotice(text, kind = "") {
   studioElement("studio-message").textContent = text;
   studioElement("studio-message").className = kind;
+  if (document.getElementById("studio-persona-dialog")?.hasAttribute("open")) {
+    const message = studioElement("studio-persona-message");
+    message.textContent = text;
+    message.dataset.state = kind;
+  }
 }
 function studioDirty() {
   // A new document edit cannot race a captured layout preview.
@@ -138,6 +148,8 @@ function studioLoad(document) {
   studioState.selected = studioDefinition().start;
   studioState.sourceDirty = false;
   studioState.drafts.clear();
+  studioPersonaOwners.clear();
+  studioPersonas?.reset();
   studioCanvasReset();
   studioDirty();
   studioRender();
@@ -183,7 +195,14 @@ function studioApplyField(key, draft) {
 }
 /** @param {HTMLElement} form @param {object} scope @param {string} name @param {unknown} value @param {string} type @param {(value:unknown)=>void} change @param {StudioFieldOptions} [options] */
 function studioField(form, scope, name, value, type, change, options = {}) {
-  const { values = [], optional = false, min, max, label = name } = options;
+  const {
+    values = [],
+    optional = false,
+    allowEmpty = false,
+    min,
+    max,
+    label = name,
+  } = options;
   const key = `${studioScope(scope)}:${name}`,
     pending = studioState.drafts.get(key);
   const group = studioText("label", label);
@@ -215,7 +234,7 @@ function studioField(form, scope, name, value, type, change, options = {}) {
   }
   control.id = `studio-field-${studioScope(scope)}-${name}`;
   control.setAttribute("aria-label", label);
-  control.required = !optional && type !== "select";
+  control.required = !optional && !allowEmpty && type !== "select";
   if (pending) {
     control.value = pending.control.value;
     control.setCustomValidity(pending.control.validationMessage);
@@ -251,6 +270,101 @@ function studioRender() {
   studioRenderProfiles();
   studioRenderGraph();
   studioRenderNode();
+  studioPersonas?.render();
+}
+/** @param {unknown} value @returns {value is Record<string,unknown>} */
+function studioProfileRecord(value) {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+function studioProfileNames() {
+  return studioProfileRecord(studioState.document.profiles)
+    ? Object.keys(studioState.document.profiles)
+    : [];
+}
+/** @param {object} scope @param {string} [name] */
+function studioDiscardPersonaDrafts(scope, name) {
+  const prefix = `${studioScope(scope)}:`;
+  for (const key of studioState.drafts.keys())
+    if (
+      name === undefined ? key.startsWith(prefix) : key === `${prefix}${name}`
+    )
+      studioState.drafts.delete(key);
+}
+/** @param {unknown} replacement */
+function studioReplaceProfiles(replacement) {
+  if (studioProfileRecord(replacement)) {
+    for (const [scope, name] of [...studioPersonaOwners]) {
+      const next = Object.hasOwn(replacement, name)
+        ? replacement[name]
+        : undefined;
+      if (studioProfileRecord(next) && studioProfileRecord(scope)) {
+        // Keep the object that existing controls and pending callbacks own.
+        for (const key of Object.keys(scope)) delete scope[key];
+        for (const [key, value] of Object.entries(next))
+          Object.defineProperty(scope, key, {
+            value,
+            enumerable: true,
+            writable: true,
+            configurable: true,
+          });
+        Object.defineProperty(replacement, name, {
+          value: scope,
+          enumerable: true,
+          writable: true,
+          configurable: true,
+        });
+      } else studioDiscardPersonaDrafts(scope);
+      if (!studioProfileRecord(next)) studioPersonaOwners.delete(scope);
+    }
+  }
+  studioState.document.profiles = replacement;
+  studioRenderSettings();
+  studioRenderNode();
+  studioPersonas?.render();
+}
+/** @param {string} oldName @param {string} [newName] */
+function studioReassignPersona(oldName, newName) {
+  let count = 0;
+  /** @param {StudioDefinition|StudioBlock} owner @param {string} field */
+  function reassign(owner, field) {
+    if (owner[field] === oldName) {
+      if (newName === undefined) delete owner[field];
+      else owner[field] = newName;
+      count++;
+    }
+    const key = `${studioScope(owner)}:${field}`,
+      draft = studioState.drafts.get(key);
+    if (draft?.control.value === oldName) {
+      if (newName === undefined) studioState.drafts.delete(key);
+      else {
+        if (draft.control instanceof HTMLSelectElement)
+          draft.control.append(studioOption(newName));
+        draft.control.value = newName;
+      }
+    }
+  }
+  for (const definition of Object.values(studioState.document.workflows)) {
+    reassign(definition, "defaultProfile");
+    for (const block of definition.nodes)
+      if (block.kind === "agent") reassign(block, "profile");
+  }
+  for (const [owner, name] of studioPersonaOwners) {
+    if (name !== oldName) continue;
+    if (newName === undefined) studioPersonaOwners.delete(owner);
+    else studioPersonaOwners.set(owner, newName);
+  }
+  return count;
+}
+function studioPersonaWritable() {
+  if (!studioWritable()) return false;
+  if (studioState.drafts.has(`${studioScope(studioState.document)}:profiles`)) {
+    studioNotice(
+      "Apply the pending advanced profile JSON before editing personas.",
+      "error",
+    );
+    return false;
+  }
+  return true;
 }
 function studioRenderSettings() {
   const form = studioElement("studio-workflow-form"),
@@ -283,7 +397,7 @@ function studioRenderSettings() {
       else delete definition.defaultProfile;
     },
     {
-      values: ["", ...Object.keys(studioState.document.profiles ?? {})],
+      values: ["", ...studioProfileNames()],
       label: "Workflow default profile",
     },
   );
@@ -313,8 +427,7 @@ function studioRenderProfiles() {
     label: "Named profile intents",
     optional: false,
     change: (value) => {
-      studioState.document.profiles = value;
-      studioRenderSettings();
+      studioReplaceProfiles(value);
     },
   };
   if (draft) studioState.drafts.set(key, next);
@@ -1101,7 +1214,7 @@ function studioRenderNode() {
     if (["profile", "workflow", "join"].includes(type)) {
       values =
         type === "profile"
-          ? ["", ...Object.keys(studioState.document.profiles ?? {})]
+          ? ["", ...studioProfileNames()]
           : type === "workflow"
             ? Object.keys(studioState.document.workflows)
             : ["all", "any"];
@@ -1389,11 +1502,19 @@ function studioAddBlock(kind) {
 async function studioValidate() {
   try {
     if (!studioState.sourceDirty)
-      for (const [key, draft] of [...studioState.drafts])
+      while (studioState.drafts.size) {
+        const rawKey = `${studioScope(studioState.document)}:profiles`,
+          rawDraft = studioState.drafts.get(rawKey);
+        const [key, draft] = rawDraft
+          ? [rawKey, rawDraft]
+          : /** @type {[string,StudioDraft]} */ (
+              studioState.drafts.entries().next().value
+            );
         if (!studioApplyField(key, draft))
           throw new Error(
             `Correct the pending ${draft.label} field before validation.`,
           );
+      }
     const revision = studioState.revision,
       applyingSource = studioState.sourceDirty,
       source = studioState.sourceDirty
@@ -1413,10 +1534,14 @@ async function studioValidate() {
     studioState.document = studioClone(result.document);
     studioState.sourceDirty = false;
     studioState.drafts.clear();
+    studioPersonaOwners.clear();
     if (!studioState.document.workflows[studioState.workflow])
       studioState.workflow = result.document.root;
     if (!studioNode()) studioState.selected = studioDefinition().start;
-    if (applyingSource) studioCanvasReset();
+    if (applyingSource) {
+      studioCanvasReset();
+      studioPersonas?.reset();
+    }
     studioState.catalogue = result.catalogue;
     studioState.yaml = result.yaml;
     studioState.validated = revision;
@@ -1551,6 +1676,49 @@ studioButton("studio-download").onclick = () => {
   link.remove();
   setTimeout(() => URL.revokeObjectURL(url), 2000);
 };
+studioPersonas = createPersonaEditor({
+  document: () => studioState.document,
+  field: (form, scope, name, value, type, change, options) => {
+    if (studioProfileRecord(studioState.document.profiles))
+      for (const [profileName, intent] of Object.entries(
+        studioState.document.profiles,
+      ))
+        if (scope === intent) studioPersonaOwners.set(scope, profileName);
+    return studioField(
+      form,
+      scope,
+      name,
+      value,
+      type,
+      (value) => {
+        if (
+          !studioProfileRecord(studioState.document.profiles) ||
+          !Object.values(studioState.document.profiles).includes(scope)
+        )
+          throw new Error(
+            "Restore this persona in advanced profile JSON before applying its pending fields.",
+          );
+        change(value);
+      },
+      options,
+    );
+  },
+  writable: studioPersonaWritable,
+  commit: (change) => {
+    if (!studioPersonaWritable()) return false;
+    change();
+    studioDirty();
+    studioRender();
+    return true;
+  },
+  sync: () => {
+    studioRenderProfiles();
+  },
+  pending: (scope, name) =>
+    studioState.drafts.has(`${studioScope(scope)}:${name}`),
+  discard: studioDiscardPersonaDrafts,
+  reassign: studioReassignPersona,
+});
 studioBindCanvas();
 studioLoad(studioNewDocument());
 void studioValidate();
