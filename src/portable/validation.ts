@@ -7,7 +7,11 @@ import {
   parseDocument as yamlDocument,
   stringify,
 } from "yaml";
-import { hash, json, canonical } from "../util.js";
+import { json, encode } from "../util.js";
+import {
+  portableHash as hash,
+  portableCanonical as canonical,
+} from "./canonical.js";
 import { parseProfiles } from "../profiles.js";
 import type { Json } from "../types.js";
 import {
@@ -47,8 +51,17 @@ function bound(x: unknown, max: number, label: string): void {
   if (!Number.isSafeInteger(x) || Number(x) < 1 || Number(x) > max)
     throw new Error(`${label}: invalid finite bound`);
 }
-export function parseDocument(source: string): WorkflowDocument {
-  if (Buffer.byteLength(source) > DOCUMENT_LIMIT)
+export function parseDocument(
+  source: string,
+  byteLimit = DOCUMENT_LIMIT,
+): WorkflowDocument {
+  if (
+    !Number.isSafeInteger(byteLimit) ||
+    byteLimit < 1 ||
+    byteLimit > 8 * DOCUMENT_LIMIT
+  )
+    throw new Error("Invalid parser bound");
+  if (Buffer.byteLength(source) > byteLimit)
     throw new Error("Workflow document exceeds 1 MiB");
   const parsed = yamlDocument(source, {
     uniqueKeys: true,
@@ -85,7 +98,9 @@ export function parseDocument(source: string): WorkflowDocument {
   walk(parsed.contents);
   if (parsed.warnings.length)
     throw new Error(parsed.warnings.map((w) => w.message).join("; "));
-  return json(parsed.toJS({ maxAliasCount: 0 })) as unknown as WorkflowDocument;
+  return JSON.parse(
+    encode(parsed.toJS({ maxAliasCount: 0 }), byteLimit),
+  ) as WorkflowDocument;
 }
 function schemaCheck(schema: unknown, label: string): Schema {
   const s = record(schema, label);
@@ -419,7 +434,7 @@ export function validateDocument(raw: unknown): ValidatedWorkflow {
   );
   if (top.format !== "asf-ts-workflow/v1" || !id(top.root))
     throw new Error("Unsupported workflow format or root");
-  const doc = json(raw) as unknown as WorkflowDocument;
+  const doc = JSON.parse(encode(raw, DOCUMENT_LIMIT)) as WorkflowDocument;
   if (top.profiles !== undefined) doc.profiles = parseProfiles(top.profiles);
   const definitions = record(doc.workflows, "workflows");
   if (
@@ -790,7 +805,9 @@ export function serializeDocument(
 ): string {
   validateDocument(doc);
   return format === "yaml"
-    ? stringify(json(doc), { aliasDuplicateObjects: false })
+    ? stringify(JSON.parse(encode(doc, DOCUMENT_LIMIT)), {
+        aliasDuplicateObjects: false,
+      })
     : JSON.stringify(doc, null, 2) + "\n";
 }
 export function resolveValue(
