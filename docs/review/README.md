@@ -35,6 +35,8 @@ All source and document links use the product head. The current GitHub PR link i
 
 Independent comparison verified every embedded head/base source, diff and SHA-256 against Git: 126 changed files plus one reference file, with 206 in-range checkpoint references. The linked aggregate CI passed at the product head: 272 total tests, 270 passing, zero failures and two existing opt-in native CLI skips.
 
+The main-based guide branch also ran the older upstream checks. Typecheck, lint, formatting and build passed. Of 132 tests, 128 passed, two failed and two existing opt-in checks were skipped. The unchanged baseline tests fail on an unavailable `/bin/true` path (`test/process.test.ts:59`) and an uncertain command replay request (`test/self-improvement-workflow.test.ts:353`, `Action request changed: host-0/check`). This guide PR changes no product or test files. These baseline failures are separate from the passing 270-test product integration evidence above.
+
 The guide's own Chromium checks are separate. [Interaction acceptance](interaction-acceptance.json) records actual downloads and reimport, maximum-length Unicode/escaped notes, search wrapping, and stale-import ownership. [Appearance acceptance](appearance-acceptance.json) records navigation, code/decision controls and responsive checks. Both identify the exact guide bytes. No external requests or provider calls are needed.
 
 See [ADR 0207](../adr/0207-review-guide-snapshot.md) for the snapshot and delivery decision.
