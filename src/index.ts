@@ -5,3 +5,6 @@ export * from "./accounting.js";
 export * from "./http.js";
 export * from "./adapters/codex.js";
 export * from "./adapters/opencode.js";
+export * from "./composition.js";
+export * from "./profiles.js";
+export * from "./portable/index.js";

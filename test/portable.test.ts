@@ -198,3 +198,25 @@ test("literal __proto__ is retained as data and cannot become schema prototype",
     JSON.parse('{"__proto__":3}') as unknown;
   assert.throws(() => validateDocument(d));
 });
+
+test("portable canonical identity supports bounded closures above legacy256KiB", () => {
+  const d: WorkflowDocument = {
+    format: "asf-ts-workflow/v1",
+    root: "w0",
+    workflows: {},
+  };
+  for (let i = 0; i < 40; i++)
+    d.workflows[`w${i}`] = {
+      version: "1",
+      inputSchema: { description: "i".repeat(4096) },
+      outputSchema: { description: "o".repeat(4096) },
+      start: "end",
+      nodes: [{ id: "end", kind: "end", output: null }],
+    };
+  assert.ok(Buffer.byteLength(JSON.stringify(d)) > 256 * 1024);
+  const v = validateDocument(d);
+  assert.equal(
+    validateDocument(parseDocument(serializeDocument(d, "yaml"))).identity,
+    v.identity,
+  );
+});
