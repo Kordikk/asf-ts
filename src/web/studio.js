@@ -428,7 +428,10 @@ function studioPositions() {
   const definition = studioDefinition(),
     positions = new Map();
   for (const node of definition.nodes) {
-    const authored = definition.layout?.[node.id];
+    const authored =
+      definition.layout && Object.hasOwn(definition.layout, node.id)
+        ? definition.layout[node.id]
+        : undefined;
     if (authored) positions.set(node.id, { ...authored });
   }
   const pending = [{ id: definition.start, x: 40, y: 180 }],
@@ -471,9 +474,10 @@ function studioPosition(node) {
 /** @param {Map<string,StudioPosition>} positions */
 function studioKeepPositions(positions) {
   const definition = studioDefinition();
-  definition.layout ??= {};
-  for (const [id, position] of positions)
-    definition.layout[id] = { ...position };
+  definition.layout = Object.fromEntries([
+    ...Object.entries(definition.layout ?? {}),
+    ...[...positions].map(([id, position]) => [id, { ...position }]),
+  ]);
 }
 /** @param {StudioBlock} node @param {string} port */
 function studioPortY(node, port) {
@@ -1076,9 +1080,14 @@ function studioRenderNode() {
         for (const key of ["next", "then", "else"])
           if (node[key] === old) node[key] = value;
       studioReplaceReferences(definition.nodes, old, renamed);
-      if (definition.layout?.[old]) {
-        definition.layout[renamed] = definition.layout[old];
-        delete definition.layout[old];
+      if (definition.layout && Object.hasOwn(definition.layout, old)) {
+        Object.defineProperty(definition.layout, renamed, {
+          value: definition.layout[old],
+          enumerable: true,
+          writable: true,
+          configurable: true,
+        });
+        if (renamed !== old) delete definition.layout[old];
       }
       studioRenderSettings();
     },
