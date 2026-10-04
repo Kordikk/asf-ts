@@ -15,7 +15,7 @@ npm run asf -- run --workflow /tmp/review.mts --run generated-demo --input '{"ok
 npm run asf -- serve --port 8080
 ```
 
-Artifacts never overwrite files. `serve` creates an empty store if needed, then opens it read-only. Open `/studio` for authoring and `/` for recorded execution. The browser has no compile/run/resume/retry/file-path operation.
+Artifacts never overwrite files. `serve` creates an empty store if needed, then opens it read-only. Open `/studio` for authoring, `/graph` for declared graphs and exact receipts, and `/` for recorded execution lanes. The browser has no compile/run/resume/retry/file-path operation.
 
 ## Recipient configuration
 
@@ -58,3 +58,5 @@ npm run asf -- run --workflow /tmp/adk-demo.mts --run generated-adk-demo --input
 ```
 
 The trusted example sends SDK diagnostics to stderr so CLI stdout remains JSON. Generated entry hashes bind this reviewed target file; dependency revisions remain the recipient's responsibility. See the [native export assessment](adr/0008-native-export-assessment.md).
+
+The core library entry `src/index.ts` exports `CandidateVerifier`, typed child and profile contracts, portable file APIs, and `buildGraphInspection`. ADK stays an explicit optional adapter import. See [candidate verification](designs/candidate-verification.md) and [declared inspection](designs/declared-inspection.md).

@@ -8,3 +8,6 @@ export * from "./adapters/opencode.js";
 export * from "./composition.js";
 export * from "./profiles.js";
 export * from "./portable/index.js";
+export * from "./verification.js";
+export * from "./portable/inspection.js";
+export type * from "./portable/inspection-types.js";
