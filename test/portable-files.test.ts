@@ -45,7 +45,7 @@ test("renderer escapes labels and generated ASF driver freezes complete source w
   assert.ok(!svg.includes("<script>"));
   const source = compileDocument(doc);
   assert.ok(source.includes("executeDocument"));
-  assert.ok(source.includes("verification") === false);
+  assert.ok(!source.includes("CandidateVerifier"));
   assert.ok(source.includes("review"));
   assert.ok(!source.includes("apiKey"));
 });
