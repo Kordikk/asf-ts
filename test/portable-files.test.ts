@@ -233,8 +233,14 @@ test("renderer names both branch ports when they reach the same target", () => {
     else: "end",
   });
   const svg = renderDocument(d);
-  assert.ok(svg.includes(">true</text>"));
-  assert.ok(svg.includes(">false</text>"));
+  const ports = ["true", "false"].map((label) => {
+    const match = svg.match(
+      new RegExp(`<text x="([^"]+)" y="([^"]+)">${label}</text>`),
+    );
+    assert.ok(match, `missing ${label} port`);
+    return [match[1], match[2]];
+  });
+  assert.notDeepEqual(ports[0], ports[1], "branch labels must be distinct");
 });
 
 test("render and bundle bytes are independent of workflow-map insertion order", () => {

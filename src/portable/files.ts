@@ -97,7 +97,7 @@ export function supportReport(
     frameworks: ["codex", "opencode", "adk"],
   };
 }
-/** Render declared topology only. No provider imports or executable registrations. */
+/** Render declared topology and contracts without executable registrations. */
 export function renderDocument(raw: WorkflowDocument): string {
   const { document, identity } = validateDocument(raw);
   let offset = 70;
@@ -140,9 +140,18 @@ export function renderDocument(raw: WorkflowDocument): string {
         const q = coords.get(next)!;
         const label =
           n.kind === "branch" ? (port === 0 ? "true" : "false") : "next";
-        sections.push(
-          `<path d="M ${p.x} ${p.y + 25} L ${q.x} ${q.y - 25}" marker-end="url(#arrow)"/><text x="${(p.x + q.x) / 2 + 5}" y="${(p.y + q.y) / 2}">${label}</text>`,
-        );
+        if (n.kind === "branch") {
+          const side = port === 0 ? -1 : 1,
+            middleX = (p.x + q.x) / 2,
+            middleY = (p.y + q.y) / 2;
+          sections.push(
+            `<path d="M ${p.x + side * 25} ${p.y + 25} Q ${middleX + side * 50} ${middleY} ${q.x + side * 25} ${q.y - 25}" marker-end="url(#arrow)"/><text x="${middleX + side * 55}" y="${middleY - 8}">${label}</text>`,
+          );
+        } else {
+          sections.push(
+            `<path d="M ${p.x} ${p.y + 25} L ${q.x} ${q.y - 25}" marker-end="url(#arrow)"/><text x="${(p.x + q.x) / 2 + 5}" y="${(p.y + q.y) / 2}">${label}</text>`,
+          );
+        }
       }
     }
     for (const n of w.nodes) {
