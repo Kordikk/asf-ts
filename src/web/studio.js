@@ -570,7 +570,7 @@ function studioRenderNode() {
       {
         optional,
         values,
-        min: name === "corrections" ? 0 : 1,
+        min: ["corrections", "maxDispatches"].includes(name) ? 0 : 1,
         max: name === "corrections" ? 3 : undefined,
         label:
           name === "workflow"

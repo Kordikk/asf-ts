@@ -147,6 +147,7 @@ try {
   await expect(page.locator("#studio-child-contract")).toContainText(
     '"defaultProfile": null',
   );
+  await commit(node.getByLabel("maxDispatches", { exact: true }), "0");
   await page
     .getByRole("button", { name: "Open child review", exact: true })
     .click();
@@ -248,6 +249,15 @@ try {
     .selectOption("reviewer");
   await validate();
   const authored = await source();
+  assert.equal(
+    (
+      authored.workflows.main!.nodes.find(
+        (block) => block.id === "workflow",
+      ) as { maxDispatches: number }
+    ).maxDispatches,
+    0,
+    "Zero child allowance is preserved by the form and shared validator",
+  );
   assert.equal(
     authored.workflows.review!.defaultProfile,
     undefined,
