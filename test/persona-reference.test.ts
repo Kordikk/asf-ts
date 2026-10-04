@@ -46,7 +46,10 @@ test("workflow and node persona references use the profile name bound through po
       );
       assert.equal(restored.identity, result.identity);
       assert.equal(restored.document.workflows.main!.defaultProfile, name);
-      assert.equal(restored.document.workflows.main!.nodes[0]!.profile, name);
+      const node = restored.document.workflows.main!.nodes[0]!;
+      assert.equal(node.kind, "agent");
+      assert.ok(node.kind === "agent");
+      assert.equal(node.profile, name);
     }
   }
   assert.throws(
