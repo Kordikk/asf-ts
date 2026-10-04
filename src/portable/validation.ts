@@ -536,7 +536,12 @@ export function validateDocument(raw: unknown): ValidatedWorkflow {
       for (const k of ["timeoutMs", "maxDispatches", "attempt"]) {
         const v = (n as unknown as Record<string, unknown>)[k];
         if (v !== undefined)
-          bound(v, k === "timeoutMs" ? 3600000 : 10000, `${label} ${k}`);
+          bound(
+            v,
+            k === "timeoutMs" ? 3600000 : 10000,
+            `${label} ${k}`,
+            k === "maxDispatches" ? 0 : 1,
+          );
       }
       if (n.kind === "agent") {
         if (typeof n.prompt !== "string" || Buffer.byteLength(n.prompt) > 65536)

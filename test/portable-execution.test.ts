@@ -278,3 +278,31 @@ test("repeat exhaustion is a durable negative verdict with exact finite child at
     f.close();
   }
 });
+
+test("zero logical child allowance permits pure work and rejects model dispatch before reservation", async () => {
+  const f = fixture();
+  try {
+    const pure = portableFixture();
+    Object.assign(pure.workflows.delivery!.nodes[0]!, { maxDispatches: 0 });
+    assert.equal(
+      (await f.runtime().run((r) => executeDocument(r, pure, { ok: true })))
+        .passed,
+      true,
+    );
+    const d = agentDocument(),
+      h = new Scripted(['{"ok":true}']);
+    Object.assign(d.workflows.delivery!.nodes[0]!, { maxDispatches: 0 });
+    await assert.rejects(
+      f
+        .runtime({ runId: "zero", workflowIdentity: "zero" })
+        .run((r) =>
+          executeDocument(r, d, { ok: true }, { bindings: bindings(h) }),
+        ),
+      /dispatch limit/i,
+    );
+    assert.equal(h.calls.length, 0);
+    assert.equal(f.store.inspect("zero").totals.invocations, 0);
+  } finally {
+    f.close();
+  }
+});
