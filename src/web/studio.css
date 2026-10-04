@@ -704,6 +704,10 @@
 #studio-persona-dialog input[type="checkbox"] {
   width: 20px;
   height: 20px;
+  min-width: 20px;
+  min-height: 20px;
+  padding: 0;
+  margin: 0;
   flex: none;
   accent-color: var(--accent);
 }
