@@ -238,9 +238,26 @@ test("renderer names both branch ports when they reach the same target", () => {
       new RegExp(`<text x="([^"]+)" y="([^"]+)">${label}</text>`),
     );
     assert.ok(match, `missing ${label} port`);
-    return [match[1], match[2]];
+    return [Number(match[1]), Number(match[2])];
   });
   assert.notDeepEqual(ports[0], ports[1], "branch labels must be distinct");
+  const cards = [
+    ...svg.matchAll(
+      /<rect x="([^"]+)" y="([^"]+)" width="([^"]+)" height="([^"]+)"/g,
+    ),
+  ].map((m) => m.slice(1).map(Number));
+  for (const [x, y] of ports) {
+    assert.ok(
+      cards.every(
+        ([cx, cy, width, height]) =>
+          x! + 48 <= cx! ||
+          x! >= cx! + width! ||
+          y! <= cy! ||
+          y! - 14 >= cy! + height!,
+      ),
+      "branch labels must stay outside every node card",
+    );
+  }
 });
 
 test("render and bundle bytes are independent of workflow-map insertion order", () => {

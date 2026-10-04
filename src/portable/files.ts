@@ -143,9 +143,9 @@ export function renderDocument(raw: WorkflowDocument): string {
         if (n.kind === "branch") {
           const side = port === 0 ? -1 : 1,
             middleX = (p.x + q.x) / 2,
-            middleY = (p.y + q.y) / 2;
+            laneY = Math.min(p.y, q.y) - (port === 0 ? 43 : 61);
           sections.push(
-            `<path d="M ${p.x + side * 25} ${p.y + 25} Q ${middleX + side * 50} ${middleY} ${q.x + side * 25} ${q.y - 25}" marker-end="url(#arrow)"/><text x="${middleX + side * 55}" y="${middleY - 8}">${label}</text>`,
+            `<path d="M ${p.x + side * 25} ${p.y - 25} C ${p.x + side * 25} ${laneY - 14} ${q.x + side * 25} ${laneY - 14} ${q.x + side * 25} ${q.y - 25}" marker-end="url(#arrow)"/><text x="${middleX + side * 55}" y="${laneY}">${label}</text>`,
           );
         } else {
           sections.push(
