@@ -72,6 +72,24 @@ export async function verifyPersonas(
 
   await page.click("#studio-new");
   await open();
+  await expect(page.locator("#studio-persona-message")).toContainText(
+    "Create a named persona",
+  );
+  await close();
+  const existingPersona = await read();
+  existingPersona.profiles = { imported: { model: "local-model" } };
+  const existingPath = join(fixture, "existing-persona.json");
+  writeFileSync(existingPath, JSON.stringify(existingPersona));
+  await page.locator("#studio-file").setInputFiles(existingPath);
+  await expect(download).toBeEnabled();
+  await open();
+  await expect(page.locator("#studio-persona-list")).toHaveValue("imported");
+  await expect(page.locator("#studio-persona-message")).not.toContainText(
+    "Create a named persona",
+  );
+  await close();
+  await page.click("#studio-new");
+  await open();
   await create("reviewer");
   await expect(field("Available tools")).toBeDisabled();
   assert.equal((await persona("reviewer"))!.tools, undefined);
@@ -183,6 +201,14 @@ export async function verifyPersonas(
     await page.locator("#studio-file").setInputFiles(path);
     await expect(download).toBeEnabled();
     assert.equal(validateDocument(await read()).identity, identity);
+    await open();
+    await expect(page.locator("#studio-persona-list")).toHaveValue(
+      "constructor",
+    );
+    await expect(page.locator("#studio-persona-message")).not.toContainText(
+      "Create a named persona",
+    );
+    await close();
   }
   checks.push(
     "persona form fields, catalogue choices and exact plugin pins survive JSON/YAML actual downloads",
@@ -285,6 +311,11 @@ export async function verifyPersonas(
   await page.locator("#studio-source").fill(source);
   await page.click("#studio-apply-source");
   await expect(download).toBeEnabled();
+  await open();
+  await expect(page.locator("#studio-persona-message")).not.toContainText(
+    "Create a named persona",
+  );
+  await close();
   checks.push(
     "raw replacement keeps pending persona controls attached; invalid advanced JSON/source cannot mutate persona intent",
   );
