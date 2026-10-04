@@ -6,7 +6,7 @@ Small SDK-first workflow runtime for **Node 22.22.x / Linux**. Ordinary async Ty
 
 ## Portable authoring and composition
 
-Portable YAML/JSON, typed child workflows, profiles, file-driven TypeScript generation, rendering, bundles, and an optional Google ADK proof build on the existing durable runtime. The local UI preserves its execution inspector and adds document authoring. Generation and execution stay in the CLI/library. See the [portable guide](docs/portable.md), [port design](docs/designs/ts-port.md), and [decisions](docs/adr).
+Portable YAML/JSON, typed child workflows, profiles, file-driven TypeScript generation, rendering, bundles, and an optional Google ADK proof build on the existing durable runtime. The local UI preserves its execution inspector and adds document authoring. Generation and execution stay in the CLI/library. See the [portable guide](docs/portable.md), [port design](docs/designs/ts-port.md), [decisions](docs/adr), and [delivery evidence](docs/evidence/ts-port-delivery.md).
 
 ## Run offline
 
