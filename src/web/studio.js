@@ -142,6 +142,7 @@ function studioLoad(document) {
   studioRender();
 }
 function studioWritable() {
+  if (studioCanvas.gesture) studioCancelGesture();
   if (!studioState.sourceDirty) return true;
   studioNotice(
     "Apply the pending source before editing forms or blocks.",
@@ -828,6 +829,8 @@ function studioMove(x, y, focus = false) {
 /** @param {string} id @param {StudioPosition} position */
 function studioSetPosition(id, position) {
   const definition = studioDefinition();
+  // Freeze visible automatic positions before moving one block.
+  studioKeepPositions(studioPositions());
   definition.layout ??= {};
   definition.layout[id] = {
     x: Math.round(Math.max(-10000, Math.min(10000, position.x))),
@@ -1152,8 +1155,8 @@ function studioRenderNode() {
       "number",
       (value) => {
         const definition = studioDefinition();
+        studioKeepPositions(studioPositions());
         definition.layout ??= {};
-        definition.layout[block.id] ??= { ...position };
         definition.layout[block.id][axis] = Number(value);
       },
       { min: -10000, max: 10000, label: `Layout ${axis}` },
