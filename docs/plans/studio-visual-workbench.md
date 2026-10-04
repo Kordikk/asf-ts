@@ -8,4 +8,4 @@ Design inputs: [Studio modernization](../designs/studio-modernization.md) and [o
 4. Collapse advanced source editing while retaining every existing form and source operation.
 5. Verify dark defaults under a light browser preference, contrast, focus, mobile layout and legacy inspector behavior.
 
-Acceptance: all three views use dark defaults, titles and block kinds remain clear, and no authoring or inspection capability is removed.
+Acceptance: all three views use dark defaults, titles and block kinds remain clear, and no authoring or inspection capability is removed. The first palette blocks remain visible on a 1265-by-712 desktop viewport with definition management collapsed.

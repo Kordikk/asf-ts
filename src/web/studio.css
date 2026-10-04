@@ -211,6 +211,15 @@
   font-weight: 750;
   letter-spacing: -0.02em;
 }
+.studio-sidebar .studio-panel {
+  padding: 12px;
+}
+.studio-sidebar .studio-panel h2 {
+  margin-bottom: 8px;
+}
+.studio-sidebar .studio-panel label {
+  margin: 8px 0;
+}
 .studio-hint {
   color: var(--muted);
   font-size: 12px;
