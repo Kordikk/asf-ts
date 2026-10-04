@@ -778,3 +778,19 @@
     overscroll-behavior: contain;
   }
 }
+
+.studio-persona-plugin-copy {
+  min-width: 0;
+}
+.studio-persona-plugin-copy small {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.persona-selected-plugins li {
+  margin-bottom: 8px;
+}
+.persona-selected-plugins button {
+  margin-left: 8px;
+}
