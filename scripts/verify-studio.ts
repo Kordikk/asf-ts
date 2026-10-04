@@ -26,15 +26,27 @@ import {
   openStudioDetails,
   verifyModernStudio,
 } from "./verify-studio-modern.js";
+import { personaCatalogueFixture, verifyPersonas } from "./verify-personas.js";
 
 const output = resolve(".asf/studio-verification");
 mkdirSync(output, { recursive: true });
 const fixture = mkdtempSync(join(output, "offline-"));
 const db = join(fixture, "empty.db");
+const personaCatalogue = join(fixture, "persona-catalogue.json");
+writeFileSync(personaCatalogue, JSON.stringify(personaCatalogueFixture));
 const store = new Store(db);
 const child = spawn(
   process.execPath,
-  ["dist/src/cli.js", "serve", "--db", db, "--port", "0"],
+  [
+    "dist/src/cli.js",
+    "serve",
+    "--db",
+    db,
+    "--port",
+    "0",
+    "--persona-catalog",
+    personaCatalogue,
+  ],
   { stdio: ["ignore", "pipe", "pipe"] },
 );
 let stderr = "";
@@ -91,7 +103,13 @@ try {
   );
   const base = await basePromise;
   await page.goto(new URL("/studio", base).href);
-  for (const asset of ["studio.html", "studio.js", "studio.css", "ui.css"]) {
+  for (const asset of [
+    "studio.html",
+    "studio.js",
+    "persona-editor.js",
+    "studio.css",
+    "ui.css",
+  ]) {
     const response = await page.request.get(
       new URL(asset === "studio.html" ? "/studio" : `/${asset}`, base).href,
     );
@@ -101,6 +119,7 @@ try {
     assert.deepEqual(bytes, readFileSync(`dist/src/web/${asset}`));
   }
   const modernChecks = await verifyModernStudio(page, base, fixture, output);
+  const personaChecks = await verifyPersonas(page, fixture, output);
   const download = page.locator("#studio-download");
   const node = page.locator("#studio-node-form");
   const settings = page.locator("#studio-workflow-form");
@@ -232,7 +251,7 @@ try {
   await pick("branch", "branch");
   await node.getByLabel("true target", { exact: true }).selectOption("agent");
   await node.getByLabel("false target", { exact: true }).selectOption("agent");
-  await page.getByText("Shared profiles", { exact: true }).click();
+  await page.getByText("Advanced persona JSON", { exact: true }).click();
   await commit(
     page.locator("#studio-profiles"),
     JSON.stringify({
@@ -430,7 +449,11 @@ try {
   assert.ok(
     requests
       .filter((request) => request.method !== "GET")
-      .every((request) => new URL(request.url).pathname === "/studio/validate"),
+      .every((request) =>
+        ["/studio/validate", "/studio/persona-catalogue"].includes(
+          new URL(request.url).pathname,
+        ),
+      ),
     "Only data validation is posted",
   );
   writeFileSync(
@@ -441,17 +464,23 @@ try {
         browser: await browser.version(),
         fixture,
         sourceAssets: Object.fromEntries(
-          ["studio.html", "studio.js", "studio.css", "ui.css", "graph.css"].map(
-            (asset) => [
-              asset,
-              createHash("sha256")
-                .update(readFileSync(`src/web/${asset}`))
-                .digest("hex"),
-            ],
-          ),
+          [
+            "studio.html",
+            "studio.js",
+            "persona-editor.js",
+            "studio.css",
+            "ui.css",
+            "graph.css",
+          ].map((asset) => [
+            asset,
+            createHash("sha256")
+              .update(readFileSync(`src/web/${asset}`))
+              .digest("hex"),
+          ]),
         ),
         checks: [
           ...modernChecks,
+          ...personaChecks,
           "built asset parity",
           "catalogue forms",
           "typed child and isolated profiles",
@@ -471,7 +500,7 @@ try {
     ),
   );
   console.log(
-    "PASS: Studio dark defaults, sibling insertion, pointer/keyboard layout, zoom/cancellation, built assets, catalogue forms, typed child/profile authoring, finite composition, invalid draft retention/cleanup, revision guard, YAML/JSON file round trips, layout identity, keyboard/mobile and inspection separation; no execution or hosted calls.",
+    "PASS: Studio dark defaults, sibling insertion, pointer/keyboard layout, zoom/cancellation, built assets, catalogue forms, persona fields/CRUD/pins/draft and response guards, typed child/profile authoring, finite composition, invalid draft retention/cleanup, revision guard, YAML/JSON file round trips, layout identity, keyboard/mobile and inspection separation; no execution or hosted calls.",
   );
 } finally {
   await context?.close();
