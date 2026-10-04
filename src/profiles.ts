@@ -65,7 +65,10 @@ function record(value: unknown, label: string): Record<string, unknown> {
 }
 
 /** Reject unknown fields and ambiguous values before rendering or dispatch. */
-export function parseProfile(value: unknown): Readonly<ProfileIntent> {
+function parseIntent(
+  value: unknown,
+  complete: boolean,
+): Readonly<ProfileIntent> {
   const input = record(value, "Profile");
   const result: ProfileIntent = {};
   for (const key of Object.keys(input))
@@ -129,11 +132,15 @@ export function parseProfile(value: unknown): Readonly<ProfileIntent> {
       [...input.tools].sort(),
     ) as unknown as string[];
   }
-  if (result.strict && result.tools === undefined)
+  if (complete && result.strict && result.tools === undefined)
     throw new Error(
       "Strict profile requires an explicit tools array; [] means no tools",
     );
   return Object.freeze(result);
+}
+
+export function parseProfile(value: unknown): Readonly<ProfileIntent> {
+  return parseIntent(value, true);
 }
 
 export function parseProfiles(
@@ -310,9 +317,9 @@ export function resolveProfile(selection: ProfileSelection): ResolvedProfile {
   if (!Object.hasOwn(selection.bindings, name))
     throw new Error(`Missing local binding for profile ${name}`);
   const intent = parseProfile({
-    ...parseProfile(selection.defaults ?? {}),
+    ...parseIntent(selection.defaults ?? {}, false),
     ...profiles[name],
-    ...parseProfile(selection.override ?? {}),
+    ...parseIntent(selection.override ?? {}, false),
   });
   return new ResolvedProfile(name, intent, selection.bindings[name]!);
 }

@@ -9,7 +9,9 @@ timeout, and session policy. Local paths, prices, credentials, and capability cl
 no portable fields. Instructions are visible content, not secret storage.
 
 `resolveProfile` accepts named profiles, local bindings, workflow and node selection, and
-explicit caller overrides. It returns a frozen `ResolvedProfile`. The preview contains
+explicit caller overrides. It validates fragments before merging and checks the complete
+intent afterward. A strict override can inherit the selected tools. It returns a frozen
+`ResolvedProfile`. The preview contains
 visible intent and actual instruction/tool support. Its digest includes adapter identity,
 which already binds protocol and price provenance. Model changes still pass native
 preflight; profiles do not invent rates or relax mandatory accounting.

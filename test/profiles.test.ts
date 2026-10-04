@@ -169,6 +169,39 @@ test("tools are explicit requirements; strict empty selection means no tools", (
   );
 });
 
+test("partial defaults and overrides inherit selected tools before the strict invariant", () => {
+  const local = binding();
+  local.capabilities = {
+    ...local.capabilities,
+    tools: ["read"],
+    strictTools: true,
+  };
+  const input = selection({
+    profiles: { writer: { tools: ["read"] } },
+    bindings: { writer: local },
+  });
+  for (const fragment of [
+    { override: { strict: true } },
+    { defaults: { strict: true } },
+  ]) {
+    const resolved = resolveProfile({ ...input, ...fragment });
+    assert.equal(resolved.intent.strict, true);
+    assert.deepEqual(resolved.intent.tools, ["read"]);
+  }
+  assert.throws(
+    () => resolveProfile(selection({ override: { strict: true } })),
+    /explicit tools/,
+  );
+  assert.throws(
+    () => resolveProfile({ ...input, override: { strict: "true" } as never }),
+    /must be boolean/,
+  );
+  assert.throws(
+    () => resolveProfile({ ...input, defaults: { capabilities: {} } as never }),
+    /Unknown profile field/,
+  );
+});
+
 test("native system instructions require an exact preconfigured native binding", () => {
   const intent = {
     instructions: "Review",
