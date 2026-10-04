@@ -187,7 +187,10 @@ function valueSchema(
         );
       return pathSchema(outputs.get(name)!, rest, label);
     }
-    const properties: Record<string, Schema> = {};
+    const properties: Record<string, Schema> = Object.create(null) as Record<
+      string,
+      Schema
+    >;
     for (const [k, v] of Object.entries(value))
       properties[k] = valueSchema(v, input, outputs, available, label);
     return {
@@ -223,6 +226,65 @@ function valueSchema(
   };
 }
 function compatible(from: Schema, to: Schema, label: string): void {
+  if (canonical(from) === canonical(to) || Object.keys(to).length === 0) return;
+  if (Object.hasOwn(from, "const")) {
+    try {
+      assertValue(to, from.const, label);
+    } catch (e) {
+      throw new Error(`${label}: incompatible port value: ${String(e)}`);
+    }
+    return;
+  }
+  if (Array.isArray(from.enum)) {
+    for (const value of from.enum) assertValue(to, value, label);
+    return;
+  }
+  if (Array.isArray(from.anyOf)) {
+    for (const option of from.anyOf as Schema[]) compatible(option, to, label);
+    return;
+  }
+  if (Array.isArray(to.anyOf)) {
+    for (const option of to.anyOf as Schema[]) {
+      try {
+        compatible(from, option, label);
+        return;
+      } catch {
+        /* Try the next declared alternative. */
+      }
+    }
+    throw new Error(`${label}: no compatible port alternative`);
+  }
+  const supported = new Set([
+    "type",
+    "properties",
+    "required",
+    "additionalProperties",
+    "items",
+    "prefixItems",
+    "additionalItems",
+    "minItems",
+    "maxItems",
+    "minimum",
+    "maximum",
+    "exclusiveMinimum",
+    "exclusiveMaximum",
+    "minLength",
+    "maxLength",
+    "pattern",
+    "format",
+    "enum",
+    "const",
+    "$schema",
+    "$id",
+    "title",
+    "description",
+    "default",
+    "examples",
+  ]);
+  if (Object.keys(to).some((k) => !supported.has(k)))
+    throw new Error(
+      `${label}: structural port comparison is unsupported; use an identical schema`,
+    );
   const types = (s: Schema): string[] =>
     s.type === undefined
       ? []
@@ -239,44 +301,106 @@ function compatible(from: Schema, to: Schema, label: string): void {
       ))
   )
     throw new Error(`${label}: incompatible port types`);
-  if (to.const !== undefined && canonical(from.const) !== canonical(to.const))
-    throw new Error(`${label}: incompatible constant`);
-  if (
-    to.enum &&
-    !(to.enum as unknown[]).some((x) => canonical(x) === canonical(from.const))
-  ) {
-    if (from.const !== undefined)
-      throw new Error(`${label}: value outside enum`);
-  }
+  if (Object.hasOwn(to, "const") || to.enum)
+    throw new Error(`${label}: enum/constant subset cannot be proven`);
+  for (const key of ["minimum", "exclusiveMinimum", "minLength", "minItems"])
+    if (
+      to[key] !== undefined &&
+      (from[key] === undefined || Number(from[key]) < Number(to[key]))
+    )
+      throw new Error(`${label}: lower bound mismatch`);
+  for (const key of ["maximum", "exclusiveMaximum", "maxLength", "maxItems"])
+    if (
+      to[key] !== undefined &&
+      (from[key] === undefined || Number(from[key]) > Number(to[key]))
+    )
+      throw new Error(`${label}: upper bound mismatch`);
+  for (const key of ["pattern", "format"])
+    if (to[key] !== undefined && from[key] !== to[key])
+      throw new Error(`${label}: ${key} restriction cannot be proven`);
   if (b.includes("object")) {
     const fp = from.properties as Record<string, Schema> | undefined,
       tp = to.properties as Record<string, Schema> | undefined;
-    for (const k of (to.required as string[]) ?? []) {
-      if (!(from.required as string[] | undefined)?.includes(k) || !fp?.[k])
-        throw new Error(`${label}: missing required port ${k}`);
-      if (tp?.[k]) compatible(fp[k], tp[k], `${label}/${k}`);
+    for (const key of (to.required as string[]) ?? [])
+      if (!(from.required as string[] | undefined)?.includes(key) || !fp?.[key])
+        throw new Error(`${label}: missing required port ${key}`);
+    for (const [key, source] of Object.entries(fp ?? {})) {
+      if (tp && Object.hasOwn(tp, key))
+        compatible(source, tp[key]!, `${label}/${key}`);
+      else if (to.additionalProperties === false)
+        throw new Error(`${label}: undeclared port ${key}`);
+      else if (
+        to.additionalProperties &&
+        typeof to.additionalProperties === "object"
+      )
+        compatible(
+          source,
+          to.additionalProperties as Schema,
+          `${label}/${key}`,
+        );
     }
-    if (to.additionalProperties === false) {
-      if (from.additionalProperties !== false)
-        throw new Error(`${label}: unbounded object port`);
-      for (const k of Object.keys(fp ?? {}))
-        if (!Object.hasOwn(tp ?? {}, k))
-          throw new Error(`${label}: undeclared port ${k}`);
+    if (
+      to.additionalProperties === false &&
+      from.additionalProperties !== false
+    )
+      throw new Error(`${label}: unbounded object port`);
+    if (from.additionalProperties !== false) {
+      for (const [key, target] of Object.entries(tp ?? {}))
+        if (!fp || !Object.hasOwn(fp, key))
+          compatible(
+            typeof from.additionalProperties === "object"
+              ? (from.additionalProperties as Schema)
+              : {},
+            target,
+            `${label}/${key}`,
+          );
+      if (
+        to.additionalProperties &&
+        typeof to.additionalProperties === "object"
+      )
+        compatible(
+          typeof from.additionalProperties === "object"
+            ? (from.additionalProperties as Schema)
+            : {},
+          to.additionalProperties as Schema,
+          `${label} additional properties`,
+        );
     }
   }
   if (b.includes("array")) {
-    if (
-      to.minItems !== undefined &&
-      Number(from.minItems ?? 0) < Number(to.minItems)
-    )
-      throw new Error(`${label}: array bound mismatch`);
-    if (
-      to.maxItems !== undefined &&
-      Number(from.maxItems ?? Infinity) > Number(to.maxItems)
-    )
-      throw new Error(`${label}: array bound mismatch`);
+    const tuple = (s: Schema): Schema[] | undefined =>
+      (s.prefixItems ?? (Array.isArray(s.items) ? s.items : undefined)) as
+        | Schema[]
+        | undefined;
+    const item = (s: Schema, index: number): Schema | false =>
+      tuple(s)?.[index] ??
+      (tuple(s)
+        ? s.additionalItems === false || s.items === false
+          ? false
+          : typeof s.items === "object" && !Array.isArray(s.items)
+            ? (s.items as Schema)
+            : typeof s.additionalItems === "object"
+              ? (s.additionalItems as Schema)
+              : {}
+        : s.items === false
+          ? false
+          : typeof s.items === "object"
+            ? (s.items as Schema)
+            : {});
+    const width =
+      Math.max(tuple(from)?.length ?? 0, tuple(to)?.length ?? 0) + 1;
+    for (let index = 0; index < width; index++) {
+      if (index >= Number(from.maxItems ?? Infinity)) break;
+      const source = item(from, index),
+        target = item(to, index);
+      if (source === false) continue;
+      if (target === false)
+        throw new Error(`${label}: extra tuple items are unsupported`);
+      compatible(source, target, `${label}[${index}]`);
+    }
   }
 }
+
 export function transitions(node: Node): string[] {
   return node.kind === "end"
     ? []
@@ -331,8 +455,9 @@ export function validateDocument(raw: unknown): ValidatedWorkflow {
     schemaCheck(data.inputSchema, `${name} input`);
     schemaCheck(data.outputSchema, `${name} output`);
     if (
-      data.defaultProfile &&
-      !Object.hasOwn(doc.profiles ?? {}, data.defaultProfile)
+      data.defaultProfile !== undefined &&
+      (!id(data.defaultProfile) ||
+        !Object.hasOwn(doc.profiles ?? {}, data.defaultProfile))
     )
       throw new Error(`${name}: unknown default profile`);
     if (
@@ -399,7 +524,10 @@ export function validateDocument(raw: unknown): ValidatedWorkflow {
       if (n.kind === "agent") {
         if (typeof n.prompt !== "string" || Buffer.byteLength(n.prompt) > 65536)
           throw new Error(`${label}: invalid prompt`);
-        if (n.profile && !Object.hasOwn(doc.profiles ?? {}, n.profile))
+        if (
+          n.profile !== undefined &&
+          (!id(n.profile) || !Object.hasOwn(doc.profiles ?? {}, n.profile))
+        )
           throw new Error(`${label}: unknown profile`);
         if (!n.profile && !data.defaultProfile)
           throw new Error(`${label}: agent requires a profile`);
@@ -428,7 +556,7 @@ export function validateDocument(raw: unknown): ValidatedWorkflow {
         schemaCheck(n.inputSchema, label);
         outputs.set(n.id, schemaCheck(n.outputSchema, label));
       } else if (n.kind === "workflow" || n.kind === "repeat") {
-        if (!Object.hasOwn(doc.workflows, n.workflow))
+        if (!id(n.workflow) || !Object.hasOwn(doc.workflows, n.workflow))
           throw new Error(`${label}: missing child ${n.workflow}`);
         deps.push(n.workflow);
         outputs.set(
@@ -467,6 +595,7 @@ export function validateDocument(raw: unknown): ValidatedWorkflow {
           if (
             !id(branch.id) ||
             ids.has(branch.id) ||
+            !id(branch.workflow) ||
             !Object.hasOwn(doc.workflows, branch.workflow)
           )
             throw new Error(`${label}: invalid branch`);

@@ -107,3 +107,94 @@ test("typed child ports reject mismatched data and JSON references resolve deter
     resolveValue({ $ref: "#/nodes/a/absent" }, null, { a: { ok: false } }),
   );
 });
+
+test("known array and optional object port contradictions reject before execution", () => {
+  for (const [source, target] of [
+    [
+      { type: "array", items: { type: "string" } },
+      { type: "array", items: { type: "integer" } },
+    ],
+    [
+      {
+        type: "object",
+        properties: { x: { type: "string" } },
+        required: ["x"],
+        additionalProperties: false,
+      },
+      {
+        type: "object",
+        properties: { x: { type: "integer" } },
+        additionalProperties: false,
+      },
+    ],
+    [
+      { type: "array", items: [{ type: "string" }], minItems: 1, maxItems: 1 },
+      { type: "array", items: [{ type: "integer" }], minItems: 1, maxItems: 1 },
+    ],
+  ] as const) {
+    const doc = portableFixture();
+    doc.workflows.delivery!.inputSchema = source as unknown as Record<
+      string,
+      unknown
+    >;
+    doc.workflows.review!.inputSchema = target as unknown as Record<
+      string,
+      unknown
+    >;
+    doc.workflows.delivery!.outputSchema = {};
+    doc.workflows.delivery!.nodes[1] = { id: "end", kind: "end", output: null };
+    doc.workflows.review!.outputSchema = {};
+    doc.workflows.review!.nodes = [
+      { id: "end", kind: "end", output: { $ref: "#/input" } },
+    ];
+    assert.throws(() => validateDocument(doc), /incompatible/);
+  }
+});
+test("selector scalars reject coercion and malformed falsy values", () => {
+  for (const mutate of [
+    (d: WorkflowDocument) =>
+      ((
+        d.workflows.delivery!.nodes[0] as unknown as { workflow: unknown }
+      ).workflow = ["review"]),
+    (d: WorkflowDocument) =>
+      Object.assign(d.workflows.delivery!, { defaultProfile: false }),
+    (d: WorkflowDocument) => {
+      d.profiles = { worker: {} };
+      d.workflows.delivery!.nodes = [
+        {
+          id: "agent",
+          kind: "agent",
+          profile: 0 as unknown as string,
+          prompt: "x",
+          outputSchema: {},
+          next: "end",
+        },
+        { id: "end", kind: "end", output: null },
+      ];
+      d.workflows.delivery!.start = "agent";
+      d.workflows.delivery!.outputSchema = {};
+    },
+  ]) {
+    const d = portableFixture();
+    mutate(d);
+    assert.throws(() => validateDocument(d));
+  }
+});
+test("literal __proto__ is retained as data and cannot become schema prototype", () => {
+  const d = portableFixture();
+  d.workflows.delivery!.inputSchema = {};
+  d.workflows.review!.inputSchema = {
+    type: "object",
+    properties: JSON.parse('{"__proto__":{"type":"string"}}') as Record<
+      string,
+      unknown
+    >,
+    required: ["__proto__"],
+    additionalProperties: false,
+  };
+  d.workflows.review!.outputSchema = {};
+  d.workflows.review!.nodes = [{ id: "end", kind: "end", output: null }];
+  (d.workflows.delivery!.nodes[0] as unknown as { input: unknown }).input =
+    JSON.parse('{"__proto__":3}') as unknown;
+  assert.throws(() => validateDocument(d));
+});
