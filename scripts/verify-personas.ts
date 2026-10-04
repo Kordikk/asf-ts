@@ -383,6 +383,10 @@ export async function verifyPersonas(
   await page.evaluate(() => new Promise(requestAnimationFrame));
   await expect(page.locator("#studio-status")).toContainText("Draft");
   await expect(download).toBeDisabled();
+  assert.equal(
+    (await persona("constructor"))!.instructions,
+    "Newer persona revision",
+  );
   await page.unroute("**/studio/validate");
   await validate();
   checks.push(
