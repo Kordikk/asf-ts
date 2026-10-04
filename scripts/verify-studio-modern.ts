@@ -338,6 +338,25 @@ export async function verifyModernStudio(
     Number(titleStyle.weight) >= 600,
     "Block title has a strong visual weight",
   );
+  const glyph = await block("route", "branch").evaluate((element) => {
+    const icon = element.querySelector(".studio-icon");
+    const frame = element.querySelector(".studio-node-frame");
+    if (!icon || !frame) throw new Error("Missing kind icon or card frame");
+    return {
+      fill: getComputedStyle(icon).fill,
+      glyphWidth: parseFloat(getComputedStyle(icon).strokeWidth),
+      frameWidth: parseFloat(getComputedStyle(frame).strokeWidth),
+    };
+  });
+  assert.equal(
+    glyph.fill,
+    "none",
+    "Selected kind icon remains an outlined glyph",
+  );
+  assert.ok(
+    glyph.glyphWidth > 0 && glyph.glyphWidth < glyph.frameWidth,
+    "Selection strengthens the card frame without thickening the kind icon",
+  );
   const focusCard = block("complete", "end");
   const resting = await focusCard.evaluate((element) => {
     const frame = element.querySelector(".studio-node-frame");
