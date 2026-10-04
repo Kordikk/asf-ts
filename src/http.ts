@@ -9,12 +9,18 @@ import { readFileSync } from "node:fs";
 import { Store } from "./store.js";
 import { errorText } from "./util.js";
 import { buildGraphInspection } from "./portable/inspection.js";
+import {
+  emptyPersonaCatalogue,
+  parsePersonaCatalogue,
+  type PersonaCatalogue,
+} from "./persona-catalogue.js";
 
 const STUDIO_BODY_LIMIT = 1024 * 1024;
 
-async function validateStudio(
+async function studioJson(
   req: IncomingMessage,
   res: ServerResponse,
+  project: (payload: unknown) => unknown | Promise<unknown>,
 ): Promise<void> {
   if (
     req.headers["content-type"]?.split(";", 1)[0]?.toLowerCase() !==
@@ -48,6 +54,22 @@ async function validateStudio(
       req.once("aborted", () => reject(new Error("Studio request aborted")));
     });
     const payload: unknown = JSON.parse(body);
+    const result = await project(payload);
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify(result));
+  } catch (error) {
+    res.setHeader("Content-Type", "application/json");
+    res
+      .writeHead(errorText(error).includes("exceeds 1 MiB") ? 413 : 400)
+      .end(JSON.stringify({ error: errorText(error) }));
+  }
+}
+
+async function validateStudio(
+  req: IncomingMessage,
+  res: ServerResponse,
+): Promise<void> {
+  await studioJson(req, res, async (payload) => {
     if (
       !payload ||
       typeof payload !== "object" ||
@@ -61,23 +83,26 @@ async function validateStudio(
       await import("./portable/validation.js");
     const { NODE_CATALOGUE } = await import("./portable/model.js");
     const result = validateDocument(parseDocument(payload.source));
-    res.setHeader("Content-Type", "application/json");
-    res.end(
-      JSON.stringify({
-        ...result,
-        catalogue: NODE_CATALOGUE,
-        yaml: serializeDocument(result.document, "yaml"),
-      }),
-    );
-  } catch (error) {
-    res.setHeader("Content-Type", "application/json");
-    res
-      .writeHead(errorText(error).includes("exceeds 1 MiB") ? 413 : 400)
-      .end(JSON.stringify({ error: errorText(error) }));
-  }
+    return {
+      ...result,
+      catalogue: NODE_CATALOGUE,
+      yaml: serializeDocument(result.document, "yaml"),
+    };
+  });
+}
+export interface ServeOptions {
+  personaCatalogue?: PersonaCatalogue;
 }
 /** Local inspection and data authoring; clients never drain provider streams. */
-export async function serve(store: Store, port = 0): Promise<Server> {
+export async function serve(
+  store: Store,
+  port = 0,
+  options: ServeOptions = {},
+): Promise<Server> {
+  // Snapshot parsed data. Later caller mutation cannot change a running server's catalogue.
+  const personaCatalogue = parsePersonaCatalogue(
+    options.personaCatalogue ?? emptyPersonaCatalogue(),
+  );
   // Explicit allowlist, resolved relative to this module for source and dist.
   const assets = new Map(
     [
@@ -110,9 +135,10 @@ export async function serve(store: Store, port = 0): Promise<Server> {
     );
     // No CORS, remote bind, or run writes; deny browser cross-origin fetches.
     const host = req.headers.host ?? "";
+    const route = (req.url ?? "/").split("?", 1)[0];
     const studioPost =
       req.method === "POST" &&
-      (req.url ?? "/").split("?", 1)[0] === "/studio/validate";
+      ["/studio/validate", "/studio/persona-catalogue"].includes(route!);
     if (
       (req.method !== "GET" && !studioPost) ||
       (req.headers.origin &&
@@ -124,11 +150,17 @@ export async function serve(store: Store, port = 0): Promise<Server> {
       return;
     }
     if (studioPost) {
-      void validateStudio(req, res);
+      if (route === "/studio/validate") void validateStudio(req, res);
+      else void studioJson(req, res, parsePersonaCatalogue);
       return;
     }
     try {
       const url = new URL(req.url ?? "/", "http://127.0.0.1");
+      if (url.pathname === "/studio/persona-catalogue") {
+        res.setHeader("Content-Type", "application/json");
+        res.end(JSON.stringify(personaCatalogue));
+        return;
+      }
       const asset = assets.get(url.pathname);
       if (asset) {
         res.setHeader("Content-Type", asset.type);
