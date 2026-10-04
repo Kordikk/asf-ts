@@ -62,6 +62,8 @@ function studioNotice(text, kind = "") {
   studioElement("studio-message").className = kind;
 }
 function studioDirty() {
+  // A new document edit cannot race a captured layout preview.
+  if (studioCanvas.gesture) studioCancelGesture();
   studioState.revision++;
   studioState.validated = -1;
   studioButton("studio-download").disabled = true;
@@ -389,7 +391,16 @@ function studioFreePosition(
   for (let column = 0; column < 129; column++)
     for (let row = 0; row < 129; row++) {
       const candidate = {
-        x: Math.max(-10000, Math.min(10000, position.x + column * 340)),
+        x: Math.max(
+          -10000,
+          Math.min(
+            10000,
+            position.x +
+              (column === 0
+                ? 0
+                : Math.ceil(column / 2) * (column % 2 ? 1 : -1) * 340),
+          ),
+        ),
         y: Math.max(
           -10000,
           Math.min(
@@ -405,7 +416,10 @@ function studioFreePosition(
       };
       if (clear(candidate)) return candidate;
     }
-  return { ...position };
+  return {
+    x: Math.max(-10000, Math.min(10000, position.x)),
+    y: Math.max(-10000, Math.min(10000, position.y)),
+  };
 }
 /** @returns {Map<string,StudioPosition>} */
 function studioPositions() {
