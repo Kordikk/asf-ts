@@ -150,3 +150,89 @@ test("trusted module entry changes use matching exports and raw byte identities"
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test("shared render exposes typed interfaces, profile intent and finite compound contracts", () => {
+  const d = portableFixture(),
+    w = d.workflows.delivery!;
+  d.profiles = {
+    reviewer: {
+      instructions: "Review <script>literal</script>",
+      model: "render-model",
+      mode: "read-only",
+    },
+  };
+  w.defaultProfile = "reviewer";
+  const child = w.nodes[0]!;
+  assert.equal(child.kind, "workflow");
+  if (child.kind !== "workflow") throw new Error("fixture child expected");
+  child.attempt = 2;
+  child.maxDispatches = 3;
+  child.timeoutMs = 25000;
+  child.next = "repeat";
+  w.nodes.splice(
+    1,
+    0,
+    {
+      id: "repeat",
+      kind: "repeat",
+      workflow: "review",
+      input: { $ref: "#/input" },
+      until: { left: { $ref: "#/result/ok" }, op: "truthy" },
+      maxIterations: 7,
+      next: "parallel",
+    },
+    {
+      id: "parallel",
+      kind: "parallel",
+      join: "any",
+      branches: [
+        { id: "left", workflow: "review", input: { $ref: "#/input" } },
+        { id: "right", workflow: "review", input: { $ref: "#/input" } },
+      ],
+      next: "end",
+    },
+  );
+  const svg = renderDocument(d);
+  for (const label of [
+    "inputSchema",
+    "outputSchema",
+    "properties",
+    "boolean",
+    "render-model",
+    "instructions",
+    "maxDispatches",
+    "timeoutMs",
+    "25000",
+    "attempt",
+    "maxIterations",
+    "branches",
+    "join",
+    "left",
+    "right",
+    "at most 7",
+  ])
+    assert.ok(svg.includes(label), `missing ${label}`);
+  assert.ok(svg.includes("&lt;script&gt;literal&lt;/script&gt;"));
+  assert.ok(!svg.includes("<script>"));
+  assert.equal(svg, renderDocument(d));
+  assert.equal(
+    verifyBundle(bundleDocument(d)).identity,
+    validateDocument(d).identity,
+  );
+});
+
+test("renderer names both branch ports when they reach the same target", () => {
+  const d = portableFixture(),
+    w = d.workflows.review!;
+  w.start = "route";
+  w.nodes.unshift({
+    id: "route",
+    kind: "branch",
+    predicate: { left: { $ref: "#/input/ok" }, op: "truthy" },
+    then: "end",
+    else: "end",
+  });
+  const svg = renderDocument(d);
+  assert.ok(svg.includes(">true</text>"));
+  assert.ok(svg.includes(">false</text>"));
+});

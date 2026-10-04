@@ -102,37 +102,77 @@ export function renderDocument(raw: WorkflowDocument): string {
   const { document, identity } = validateDocument(raw);
   let offset = 70;
   const sections: string[] = [];
+  const details = (label: string, value: unknown): void => {
+    sections.push(
+      `<text x="20" y="${offset}" class="heading">${escape(label)}</text>`,
+    );
+    offset += 24;
+    const text = Array.from(canonical(value));
+    for (let start = 0; start < text.length; start += 115) {
+      sections.push(
+        `<text x="20" y="${offset}" class="contract">${escape(text.slice(start, start + 115).join(""))}</text>`,
+      );
+      offset += 18;
+    }
+    offset += 24;
+  };
+  // Shared intent appears once, rather than expanding it at every selection.
+  details("Workflow profiles (portable intent)", document.profiles ?? {});
   for (const [name, w] of Object.entries(document.workflows)) {
+    details(`${name} · input / output contract`, {
+      version: w.version,
+      inputSchema: w.inputSchema,
+      outputSchema: w.outputSchema,
+      start: w.start,
+      defaultProfile: w.defaultProfile ?? null,
+    });
     const coords = new Map(
       w.nodes.map((n, i) => [
         n.id,
-        { x: 200 + (i % 3) * 270, y: offset + 100 + Math.floor(i / 3) * 115 },
+        { x: 200 + (i % 3) * 270, y: offset + 65 + Math.floor(i / 3) * 115 },
       ]),
-    );
-    const height = Math.ceil(w.nodes.length / 3) * 115 + 120;
-    sections.push(
-      `<text x="20" y="${offset}" class="heading">${escape(name)} v${escape(w.version)}</text><text x="20" y="${offset + 24}">input → output; default profile: ${escape(w.defaultProfile ?? "none")}</text>`,
     );
     for (const n of w.nodes) {
       const p = coords.get(n.id)!;
-      for (const next of transitions(n)) {
+      for (const [port, next] of transitions(n).entries()) {
         const q = coords.get(next)!;
+        const label =
+          n.kind === "branch" ? (port === 0 ? "true" : "false") : "next";
         sections.push(
-          `<path d="M ${p.x} ${p.y + 25} L ${q.x} ${q.y - 25}" marker-end="url(#arrow)"/>`,
+          `<path d="M ${p.x} ${p.y + 25} L ${q.x} ${q.y - 25}" marker-end="url(#arrow)"/><text x="${(p.x + q.x) / 2 + 5}" y="${(p.y + q.y) / 2}">${label}</text>`,
         );
       }
     }
     for (const n of w.nodes) {
-      const p = coords.get(n.id)!,
-        child = "workflow" in n ? ` → ${n.workflow}` : "";
+      const p = coords.get(n.id)!;
+      const subtitle =
+        n.kind === "workflow"
+          ? `${n.workflow} · attempt ${n.attempt ?? 1}`
+          : n.kind === "repeat"
+            ? `${n.workflow} · at most ${n.maxIterations}`
+            : n.kind === "parallel"
+              ? `${n.join} · ${n.branches.length} branches`
+              : "profile" in n
+                ? `profile: ${n.profile ?? w.defaultProfile ?? "none"}`
+                : n.kind;
+      const short = (text: string): string =>
+        Array.from(text).length > 29
+          ? Array.from(text).slice(0, 28).join("") + "…"
+          : text;
       sections.push(
-        `<g><rect x="${p.x - 115}" y="${p.y - 25}" width="230" height="65" rx="8"/><text x="${p.x - 105}" y="${p.y}">${escape(n.id)} · ${escape(n.kind)}</text><text x="${p.x - 105}" y="${p.y + 20}">${escape(child || ("profile" in n ? (n.profile ?? w.defaultProfile ?? "") : n.kind === "repeat" ? String(n.maxIterations) : ""))}</text></g>`,
+        `<g><title>${escape(n.id + " · " + subtitle)}</title><rect x="${p.x - 115}" y="${p.y - 25}" width="230" height="65" rx="8"/><text x="${p.x - 105}" y="${p.y}">${escape(short(n.id + " · " + n.kind))}</text><text x="${p.x - 105}" y="${p.y + 20}">${escape(short(subtitle))}</text></g>`,
       );
     }
-    offset += height;
+    offset += Math.ceil(w.nodes.length / 3) * 115 + 70;
+    for (const n of w.nodes)
+      details(`${name} / ${n.id} · declared node contract`, n);
   }
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="1020" height="${offset + 50}" role="img" aria-label="Declared workflow graph"><style>text{font:13px sans-serif;fill:#20304a}.heading{font-size:19px}rect{fill:#eef3ff;stroke:#7e94b5}path{fill:none;stroke:#7e94b5}</style><defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0L8 4L0 8Z"/></marker></defs><text x="20" y="25">ASF-TS ${identity}</text>${sections.join("")}<text x="20" y="${offset + 20}">Declared transitions only. Execution and resume require recipient preflight.</text></svg>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1020" height="${offset + 50}" role="img" aria-label="Declared workflow graph and contracts"><style>text{font:13px sans-serif;fill:#20304a}.heading{font-size:19px}.contract{font:12px monospace}rect{fill:#eef3ff;stroke:#7e94b5}path{fill:none;stroke:#7e94b5}</style><defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0L8 4L0 8Z"/></marker></defs><text x="20" y="25">ASF-TS ${identity}</text>${sections.join("")}<text x="20" y="${offset + 20}">Declared contracts only. Execution and resume require recipient preflight.</text></svg>`;
+  if (Buffer.byteLength(svg) > 4 * DOCUMENT_LIMIT)
+    throw new Error("Rendered artifact exceeds 4 MiB");
+  return svg;
 }
+
 interface Bundle {
   format: "asf-ts-bundle/v1";
   members: Record<string, { sha256: string; data: string }>;

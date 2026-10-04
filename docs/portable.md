@@ -58,3 +58,5 @@ npm run asf -- run --workflow /tmp/adk-demo.mts --run generated-adk-demo --input
 ```
 
 The trusted example sends SDK diagnostics to stderr so CLI stdout remains JSON. Generated entry hashes bind this reviewed target file; dependency revisions remain the recipient's responsibility. See the [native export assessment](adr/0008-native-export-assessment.md).
+
+Shared SVG renders include root and nested schemas, complete declared node contracts, profile intent, attempts and finite repeat/parallel rules. Rendering has a 4 MiB artifact bound; bundles keep the same member bound and an 8 MiB envelope bound. A valid source that exceeds artifact limits requires a smaller sharing view. Runtime bindings and native sessions remain absent.
