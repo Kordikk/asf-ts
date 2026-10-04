@@ -17,6 +17,16 @@ npm run asf -- serve --port 8080
 
 Artifacts never overwrite files. `serve` creates an empty store if needed, then opens it read-only. Open `/studio` for authoring, `/graph` for declared graphs and exact receipts, and `/` for recorded execution lanes. The browser has no compile/run/resume/retry/file-path operation.
 
+## Studio authoring
+
+All three pages use a dark theme by default. Studio separates the definition and block library, declared canvas, and selected-block properties. Block kinds have names, icons and distinct shapes. Expand **Manage definitions** to change the root or add a child. Expand **YAML / JSON source** for direct source editing.
+
+Select a block, choose **Insert after**, and add a block from the library. A branch offers **true** and **false** connections. Auto selects an available outcome; the inserted block retains the connection's existing successor. Sibling outcomes appear in the same downstream stage. Adding before a selected end retains the existing incoming-edge behavior.
+
+Drag a block to move it. Focus a block with Tab, then use arrow keys for 20-unit movement or Shift+arrow for 60 units. The four direction buttons move the selected block. Drag empty canvas space to pan; use **+**, **−** and **Fit view** to zoom. View changes do not edit the document. **Arrange blocks** deliberately replaces manual positions using the declared connections. Escape cancels a movement preview.
+
+Validate before download. Unapplied source and invalid property drafts keep download disabled. Movement changes layout only; YAML/JSON downloads retain positions and preserve semantic workflow identity. See the [modernization design](designs/studio-modernization.md) and [acceptance record](evidence/studio-modernization.md).
+
 ## Recipient configuration
 
 Legacy JSON `--config` supports the current Codex/OpenCode constructors. Profiles select those named agents with conservative capabilities. Strict tools or native instructions need a preconfigured trusted binding. Use `--targets local-targets.ts` for bindings, including ADK; the module exports `bindings: Record<string, ProfileBinding>`. Import the optional ADK adapter explicitly from `src/adapters/adk.ts`; the core does not initialize it.
