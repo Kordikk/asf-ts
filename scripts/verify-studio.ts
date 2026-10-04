@@ -9,6 +9,7 @@ import {
   type Route,
 } from "@playwright/test";
 import { spawn } from "node:child_process";
+import { createHash } from "node:crypto";
 import { once } from "node:events";
 import {
   existsSync,
@@ -21,6 +22,10 @@ import { join, resolve } from "node:path";
 import assert from "node:assert/strict";
 import { Store } from "../src/store.js";
 import { parseDocument, validateDocument } from "../src/portable/validation.js";
+import {
+  openStudioDetails,
+  verifyModernStudio,
+} from "./verify-studio-modern.js";
 
 const output = resolve(".asf/studio-verification");
 mkdirSync(output, { recursive: true });
@@ -95,10 +100,12 @@ try {
     assert.deepEqual(bytes, readFileSync(`src/web/${asset}`));
     assert.deepEqual(bytes, readFileSync(`dist/src/web/${asset}`));
   }
+  const modernChecks = await verifyModernStudio(page, base, fixture, output);
   const download = page.locator("#studio-download");
   const node = page.locator("#studio-node-form");
   const settings = page.locator("#studio-workflow-form");
   const commit = async (control: Locator, text: string) => {
+    await openStudioDetails(control);
     await control.fill(text);
     await control.press("Tab");
   };
@@ -116,14 +123,14 @@ try {
     });
     await button.focus();
     await page.keyboard.press("Enter");
-    await expect(page.locator("#studio-node-title")).toHaveText(id);
+    await expect(page.locator("#studio-node-title")).toContainText(id);
   };
   await expect(download).toBeEnabled();
   await expect(
     page.getByRole("button", { name: /^Add .* block$/ }),
   ).toHaveCount(8);
-  await expect(page.locator("header")).toContainText(
-    "Compile, run, render, and bundle it with the CLI",
+  await expect(page.locator(".studio-page-footer")).toContainText(
+    "Compile, run, render, and bundle it with the ASF CLI",
   );
 
   // Author the reusable child and all compound blocks through actual controls.
@@ -429,9 +436,21 @@ try {
     join(output, "acceptance.json"),
     JSON.stringify(
       {
+        observedAt: new Date().toISOString(),
         browser: await browser.version(),
         fixture,
+        sourceAssets: Object.fromEntries(
+          ["studio.html", "studio.js", "studio.css", "ui.css", "graph.css"].map(
+            (asset) => [
+              asset,
+              createHash("sha256")
+                .update(readFileSync(`src/web/${asset}`))
+                .digest("hex"),
+            ],
+          ),
+        ),
         checks: [
+          ...modernChecks,
           "built asset parity",
           "catalogue forms",
           "typed child and isolated profiles",
@@ -451,7 +470,7 @@ try {
     ),
   );
   console.log(
-    "PASS: Studio built assets, catalogue forms, typed child/profile authoring, finite composition, invalid draft retention/cleanup, revision guard, YAML/JSON file round trips, layout identity, keyboard/mobile and inspection separation; no execution or hosted calls.",
+    "PASS: Studio dark defaults, sibling insertion, pointer/keyboard layout, zoom/cancellation, built assets, catalogue forms, typed child/profile authoring, finite composition, invalid draft retention/cleanup, revision guard, YAML/JSON file round trips, layout identity, keyboard/mobile and inspection separation; no execution or hosted calls.",
   );
 } finally {
   await context?.close();
