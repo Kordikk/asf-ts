@@ -473,7 +473,7 @@ export function validateDocument(raw: unknown): ValidatedWorkflow {
     schemaCheck(data.outputSchema, `${name} output`);
     if (
       data.defaultProfile !== undefined &&
-      (!id(data.defaultProfile) ||
+      (typeof data.defaultProfile !== "string" ||
         !Object.hasOwn(doc.profiles ?? {}, data.defaultProfile))
     )
       throw new Error(`${name}: unknown default profile`);
@@ -548,7 +548,8 @@ export function validateDocument(raw: unknown): ValidatedWorkflow {
           throw new Error(`${label}: invalid prompt`);
         if (
           n.profile !== undefined &&
-          (!id(n.profile) || !Object.hasOwn(doc.profiles ?? {}, n.profile))
+          (typeof n.profile !== "string" ||
+            !Object.hasOwn(doc.profiles ?? {}, n.profile))
         )
           throw new Error(`${label}: unknown profile`);
         if (!n.profile && !data.defaultProfile)
