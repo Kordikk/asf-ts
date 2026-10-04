@@ -422,12 +422,13 @@ test("blocked preflight resumes within its original deadline and does not renew 
   }
 });
 
-test("late native completion retains accounting and receipt after child timeout", async () => {
+test("late native completion retains accounting and receipt after child timeout", async (t) => {
+  t.mock.timers.enable({ apis: ["Date"], now: Date.now() });
   const f = fixture();
   try {
     const h = new Scripted([
       async () => {
-        await sleep(80);
+        t.mock.timers.tick(30001);
         return receipt("known completion");
       },
     ]);
@@ -440,7 +441,7 @@ test("late native completion retains accounting and receipt after child timeout"
     const run = () =>
       f
         .runtime()
-        .run((r) => r.workflow("delivery", d, null, { timeoutMs: 30 }));
+        .run((r) => r.workflow("delivery", d, null, { timeoutMs: 30000 }));
     await assert.rejects(run(), /deadline expired/);
     const native = f.store.invocation("run", invocation + "/a", 0)!;
     assert.ok(native.receipt);
