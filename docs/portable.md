@@ -44,3 +44,17 @@ Layout-only edits preserve semantic file execution identity. Generated drivers e
 Candidate approvals need `requireCurrent` after the outer workflow returns, including cached parent replay, and again at the consuming publication boundary. A historical receipt does not prove current Git bytes. No atomic merge or publication authorization is implied.
 
 See [port design](designs/ts-port.md), [portable design](designs/portable-files.md), and [runtime design](designs/child-workflows.md).
+
+## Offline ADK example
+
+The [ADK document](../examples/portable/adk.yaml) and [local target binding](../examples/portable/adk-targets.ts) use the actual SDK with a deterministic local model and marker tool. They need no provider account or credential. The model reports tokens with an explicit fixture rate card. ADK remains write-only because it does not provide an operating-system read-only sandbox.
+
+```sh
+npm run asf -- validate --file examples/portable/adk.yaml
+npm run asf -- run-file --file examples/portable/adk.yaml --targets examples/portable/adk-targets.ts --run adk-demo --input '{}'
+npm run asf -- resume-file --file examples/portable/adk.yaml --targets examples/portable/adk-targets.ts --run adk-demo --input '{}'
+npm run asf -- compile --file examples/portable/adk.yaml --targets examples/portable/adk-targets.ts --output /tmp/adk-demo.mts
+npm run asf -- run --workflow /tmp/adk-demo.mts --run generated-adk-demo --input '{}'
+```
+
+The trusted example sends SDK diagnostics to stderr so CLI stdout remains JSON. Generated entry hashes bind this reviewed target file; dependency revisions remain the recipient's responsibility. See the [native export assessment](adr/0008-native-export-assessment.md).
