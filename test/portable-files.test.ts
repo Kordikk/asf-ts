@@ -236,3 +236,17 @@ test("renderer names both branch ports when they reach the same target", () => {
   assert.ok(svg.includes(">true</text>"));
   assert.ok(svg.includes(">false</text>"));
 });
+
+test("render and bundle bytes are independent of workflow-map insertion order", () => {
+  const d = portableFixture(),
+    reordered = {
+      ...d,
+      workflows: Object.fromEntries(Object.entries(d.workflows).reverse()),
+    };
+  assert.equal(renderDocument(d), renderDocument(reordered));
+  assert.equal(bundleDocument(d), bundleDocument(reordered));
+  assert.equal(
+    verifyBundle(bundleDocument(reordered)).identity,
+    validateDocument(d).identity,
+  );
+});

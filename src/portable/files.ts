@@ -118,7 +118,9 @@ export function renderDocument(raw: WorkflowDocument): string {
   };
   // Shared intent appears once, rather than expanding it at every selection.
   details("Workflow profiles (portable intent)", document.profiles ?? {});
-  for (const [name, w] of Object.entries(document.workflows)) {
+  for (const [name, w] of Object.entries(document.workflows).sort(([a], [b]) =>
+    a < b ? -1 : a > b ? 1 : 0,
+  )) {
     details(`${name} · input / output contract`, {
       version: w.version,
       inputSchema: w.inputSchema,
