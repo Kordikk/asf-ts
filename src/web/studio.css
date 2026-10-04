@@ -758,3 +758,23 @@
   font-size: 13px;
   overflow-wrap: anywhere;
 }
+
+@media (min-width: 701px) {
+  #studio-persona-dialog[open] {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .studio-persona-header {
+    flex: none;
+  }
+  .studio-persona-layout {
+    min-height: 0;
+    overflow: hidden;
+  }
+  .studio-persona-library,
+  .studio-persona-settings {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}
