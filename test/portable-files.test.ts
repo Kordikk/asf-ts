@@ -150,3 +150,126 @@ test("trusted module entry changes use matching exports and raw byte identities"
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test("shared render exposes typed interfaces, profile intent and finite compound contracts", () => {
+  const d = portableFixture(),
+    w = d.workflows.delivery!;
+  d.profiles = {
+    reviewer: {
+      instructions: "Review <script>literal</script>",
+      model: "render-model",
+      mode: "read-only",
+    },
+  };
+  w.defaultProfile = "reviewer";
+  const child = w.nodes[0]!;
+  assert.equal(child.kind, "workflow");
+  if (child.kind !== "workflow") throw new Error("fixture child expected");
+  child.attempt = 2;
+  child.maxDispatches = 3;
+  child.timeoutMs = 25000;
+  child.next = "repeat";
+  w.nodes.splice(
+    1,
+    0,
+    {
+      id: "repeat",
+      kind: "repeat",
+      workflow: "review",
+      input: { $ref: "#/input" },
+      until: { left: { $ref: "#/result/ok" }, op: "truthy" },
+      maxIterations: 7,
+      next: "parallel",
+    },
+    {
+      id: "parallel",
+      kind: "parallel",
+      join: "any",
+      branches: [
+        { id: "left", workflow: "review", input: { $ref: "#/input" } },
+        { id: "right", workflow: "review", input: { $ref: "#/input" } },
+      ],
+      next: "end",
+    },
+  );
+  const svg = renderDocument(d);
+  for (const label of [
+    "inputSchema",
+    "outputSchema",
+    "properties",
+    "boolean",
+    "render-model",
+    "instructions",
+    "maxDispatches",
+    "timeoutMs",
+    "25000",
+    "attempt",
+    "maxIterations",
+    "branches",
+    "join",
+    "left",
+    "right",
+    "at most 7",
+  ])
+    assert.ok(svg.includes(label), `missing ${label}`);
+  assert.ok(svg.includes("&lt;script&gt;literal&lt;/script&gt;"));
+  assert.ok(!svg.includes("<script>"));
+  assert.equal(svg, renderDocument(d));
+  assert.equal(
+    verifyBundle(bundleDocument(d)).identity,
+    validateDocument(d).identity,
+  );
+});
+
+test("renderer names both branch ports when they reach the same target", () => {
+  const d = portableFixture(),
+    w = d.workflows.review!;
+  w.start = "route";
+  w.nodes.unshift({
+    id: "route",
+    kind: "branch",
+    predicate: { left: { $ref: "#/input/ok" }, op: "truthy" },
+    then: "end",
+    else: "end",
+  });
+  const svg = renderDocument(d);
+  const ports = ["true", "false"].map((label) => {
+    const match = svg.match(
+      new RegExp(`<text x="([^"]+)" y="([^"]+)">${label}</text>`),
+    );
+    assert.ok(match, `missing ${label} port`);
+    return [Number(match[1]), Number(match[2])];
+  });
+  assert.notDeepEqual(ports[0], ports[1], "branch labels must be distinct");
+  const cards = [
+    ...svg.matchAll(
+      /<rect x="([^"]+)" y="([^"]+)" width="([^"]+)" height="([^"]+)"/g,
+    ),
+  ].map((m) => m.slice(1).map(Number));
+  for (const [x, y] of ports) {
+    assert.ok(
+      cards.every(
+        ([cx, cy, width, height]) =>
+          x! + 48 <= cx! ||
+          x! >= cx! + width! ||
+          y! <= cy! ||
+          y! - 14 >= cy! + height!,
+      ),
+      "branch labels must stay outside every node card",
+    );
+  }
+});
+
+test("render and bundle bytes are independent of workflow-map insertion order", () => {
+  const d = portableFixture(),
+    reordered = {
+      ...d,
+      workflows: Object.fromEntries(Object.entries(d.workflows).reverse()),
+    };
+  assert.equal(renderDocument(d), renderDocument(reordered));
+  assert.equal(bundleDocument(d), bundleDocument(reordered));
+  assert.equal(
+    verifyBundle(bundleDocument(reordered)).identity,
+    validateDocument(d).identity,
+  );
+});
