@@ -416,19 +416,13 @@
 #studio-graph .studio-block.dragging {
   cursor: grabbing;
 }
-#studio-graph .studio-node-frame,
-#studio-graph .studio-block > rect,
-#studio-graph .studio-block > path {
+#studio-graph .studio-node-frame {
   fill: #1c283b;
   stroke: var(--kind-color);
   stroke-width: 1.5;
 }
 #studio-graph .studio-block.selected .studio-node-frame,
-#studio-graph .studio-block:focus .studio-node-frame,
-#studio-graph .studio-block.selected > rect,
-#studio-graph .studio-block:focus > rect,
-#studio-graph .studio-block.selected > path,
-#studio-graph .studio-block:focus > path {
+#studio-graph .studio-block:focus .studio-node-frame {
   stroke: #d6e6ff;
   stroke-width: 3;
 }
@@ -451,9 +445,9 @@
   font-size: 11px;
 }
 #studio-graph .studio-block .studio-icon {
-  fill: var(--kind-color);
-  font-size: 22px;
-  font-weight: 700;
+  fill: none;
+  stroke: var(--kind-color);
+  stroke-width: 1.7;
 }
 #studio-graph .studio-handle {
   fill: #172234;

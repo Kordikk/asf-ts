@@ -25,7 +25,7 @@ flowchart LR
 | Coordinates are the only movement control | Direct pointer drag plus keyboard and direction buttons                                       | Move under scroll/zoom and with negative imported coordinates; cancel restores layout  |
 | Confusing workbench                       | Compact document actions, canvas controls, separate properties, collapsed advanced source     | Desktop and mobile retain access to forms, source, import and export                   |
 
-The selected definition owns node coordinates. Array order remains the serialized definition order. Insertion rewires only the chosen port and preserves that port's existing successor. Collision avoidance affects layout only. Imported positions stay authoritative until the author moves or arranges them.
+The selected definition owns node coordinates. Array order remains the serialized definition order. Insertion after a nonterminal block rewires only the chosen port and preserves that port's existing successor. Insertion before a selected end retains the existing behavior: its incoming edges connect to the new block. Collision avoidance affects layout only. Imported positions stay authoritative until the author moves or arranges them.
 
 Drag uses transient geometry until completion. New/imported documents and definition changes reset view state. Panning and zoom change the view, not the document. Movement cannot commit over pending unapplied source. Invalid field drafts survive selection and movement and keep export disabled. Layout changes still require validation before export; validation returns the same semantic identity when layout is the only change.
 
