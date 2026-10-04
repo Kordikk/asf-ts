@@ -134,6 +134,7 @@ try {
   );
 
   // Author the reusable child and all compound blocks through actual controls.
+  await openStudioDetails(page.locator("#studio-child-name"));
   await page.fill("#studio-child-name", "review");
   await page.click("#studio-add-child");
   await expect(page.locator("#studio-definition option")).toHaveCount(2);

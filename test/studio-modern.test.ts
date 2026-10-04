@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { createContext, runInContext } from "node:vm";
 import type { WorkflowDocument } from "../src/portable/model.js";
-import { validateDocument } from "../src/portable/validation.js";
+import { parseDocument, validateDocument } from "../src/portable/validation.js";
 
 const fixture: WorkflowDocument = {
   format: "asf-ts-workflow/v1",
@@ -264,3 +264,31 @@ test("a later block edit cancels a stale drag preview without saving its positio
     validateDocument(before.document).identity,
   );
 });
+
+for (const id of ["__proto__", "constructor"])
+  test(`literal block ID ${id} has finite own layout and survives source round trip`, () => {
+    const { actions, inspect } = editor();
+    const imported = structuredClone(fixture);
+    const definition = imported.workflows.main!;
+    definition.start = id;
+    definition.nodes[0]!.id = id;
+    definition.layout = {};
+    actions.load(imported);
+    const initial = inspect().position;
+    assert.ok(Number.isFinite(initial.x) && Number.isFinite(initial.y));
+    const identity = validateDocument(imported).identity;
+    actions.pick("complete");
+    const successor = inspect().position;
+    actions.pick(id);
+    actions.move(25, -30);
+    const moved = inspect();
+    const expected = { x: initial.x + 25, y: initial.y - 30 };
+    assert.deepEqual(moved.position, expected);
+    assert.ok(Object.hasOwn(moved.document.workflows.main!.layout!, id));
+    actions.pick("complete");
+    assert.deepEqual(inspect().position, successor);
+    const restored = parseDocument(moved.source);
+    assert.ok(Object.hasOwn(restored.workflows.main!.layout!, id));
+    assert.deepEqual(restored.workflows.main!.layout![id], expected);
+    assert.equal(validateDocument(restored).identity, identity);
+  });

@@ -212,8 +212,60 @@ export async function verifyModernStudio(
   await expect(page.locator("#studio-source-panel")).not.toHaveAttribute(
     "open",
   );
+  await page.setViewportSize({ width: 1265, height: 712 });
+  await page.screenshot({ path: join(output, "studio-workbench-1265.png") });
+  const density = await page.evaluate(() =>
+    Object.fromEntries(
+      [
+        ["sidebar", ".studio-sidebar"],
+        ["definitions", "[aria-label='Workflow definitions']"],
+        ["library", ".studio-library"],
+        ["heading", ".studio-library h2"],
+        ["agent", "#studio-catalogue button[data-kind='agent']"],
+      ].map(([name, selector]) => [
+        name,
+        document.querySelector(selector!)?.getBoundingClientRect().toJSON(),
+      ]),
+    ),
+  );
+  writeFileSync(
+    join(output, "studio-workbench-1265-layout.json"),
+    JSON.stringify(density, null, 2),
+  );
+  await expect(
+    page.getByRole("heading", { name: "Available blocks", exact: true }),
+  ).toBeInViewport();
+  const visibleAgent = page.getByRole("button", {
+    name: "Add agent block",
+    exact: true,
+  });
+  await expect(visibleAgent).toBeInViewport({ ratio: 0.5 });
+  await expect(visibleAgent.locator(".studio-icon")).toBeInViewport({
+    ratio: 1,
+  });
+  await expect(visibleAgent.locator("strong")).toBeInViewport({ ratio: 1 });
+  const visibleHeight = await visibleAgent.evaluate((element) => {
+    const box = element.getBoundingClientRect();
+    return Math.min(box.bottom, innerHeight) - Math.max(box.top, 0);
+  });
+  assert.ok(
+    visibleHeight >= 44,
+    "First add-block affordance has a visible pointer target",
+  );
+  await expect(
+    page.locator("#studio-child-name").locator("xpath=ancestor::details"),
+  ).not.toHaveAttribute("open");
+  await visibleAgent.locator("strong").click();
+  await expect(page.locator("#studio-node-title")).toHaveText("agent");
+  await page.click("#studio-new");
+  await expect(download).toBeEnabled();
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  checks.push(
+    "block palette remains visible at 1265x712 with definition management collapsed",
+  );
 
   // The reported branch scenario must insert two siblings at their own ports.
+  await openStudioDetails(page.locator("#studio-child-name"));
   await page.fill("#studio-child-name", "review");
   await page.click("#studio-add-child");
   await page
@@ -511,6 +563,45 @@ export async function verifyModernStudio(
   }
   checks.push(
     "actual YAML/JSON downloads retain dragged layout and semantic identity",
+  );
+
+  for (const id of ["__proto__", "constructor"]) {
+    await importDocument(imported);
+    await pick("route", "branch");
+    const oldPosition = await worldPosition("route", "branch");
+    const idControl = form.getByLabel("Block ID", { exact: true });
+    await idControl.fill(id);
+    await idControl.press("Tab");
+    await expect(block(id, "branch")).toBeVisible();
+    assert.deepEqual(
+      await worldPosition(id, "branch"),
+      oldPosition,
+      "Renaming a block to a literal object key retains its position",
+    );
+    await validate();
+    const literalIdentity = validateDocument(await read()).identity;
+    await page.click("#studio-zoom-fit");
+    const moved = await drag(id, "branch", -30, 25);
+    await validate();
+    const literal = await read();
+    assert.ok(Object.hasOwn(literal.workflows.main!.layout!, id));
+    assert.deepEqual(literal.workflows.main!.layout![id], moved);
+    assert.equal(validateDocument(literal).identity, literalIdentity);
+    await page.selectOption("#studio-format", "json");
+    const pending = page.waitForEvent("download");
+    await download.click();
+    const file = join(fixture, `literal-${id}.json`);
+    await (await pending).saveAs(file);
+    const restored = parseDocument(readFileSync(file, "utf8"));
+    assert.ok(Object.hasOwn(restored.workflows.main!.layout!, id));
+    assert.deepEqual(restored.workflows.main!.layout![id], moved);
+    assert.equal(validateDocument(restored).identity, literalIdentity);
+    await page.locator("#studio-file").setInputFiles(file);
+    await expect(download).toBeEnabled();
+    assert.deepEqual(await worldPosition(id, "branch"), moved);
+  }
+  checks.push(
+    "literal object-key IDs rename/move/JSON reimport with own coordinates and stable identity",
   );
   await page.setViewportSize({ width: 390, height: 844 });
   assert.equal(
