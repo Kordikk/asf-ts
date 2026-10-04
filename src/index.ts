@@ -7,6 +7,7 @@ export * from "./adapters/codex.js";
 export * from "./adapters/opencode.js";
 export * from "./composition.js";
 export * from "./profiles.js";
+export * from "./persona-catalogue.js";
 export * from "./portable/index.js";
 export * from "./verification.js";
 export * from "./portable/inspection.js";

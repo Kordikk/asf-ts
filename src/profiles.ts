@@ -1,6 +1,12 @@
 import type { AgentConfig, Json } from "./types.js";
 import { hash, positive, TEXT_LIMIT } from "./util.js";
 
+/** A pinned requirement. Catalogue metadata does not prove native activation. */
+export interface PluginReference {
+  id: string;
+  revision: string;
+}
+
 /** Portable intent. Installed adapters and private configuration remain local. */
 export interface ProfileIntent {
   instructions?: string;
@@ -11,6 +17,7 @@ export interface ProfileIntent {
   strict?: boolean;
   timeoutMs?: number;
   session?: "fresh" | "compatible";
+  plugins?: readonly PluginReference[];
 }
 
 /** Trusted adapter metadata. An inventory alone does not enforce a restriction. */
@@ -21,6 +28,8 @@ export interface ProfileCapabilities {
   strictTools: boolean;
   nativeSystem: boolean;
   fresh: boolean;
+  /** Exact plugins activated by trusted local target configuration. */
+  activePlugins?: readonly PluginReference[];
 }
 
 export interface ProfileBinding {
@@ -50,8 +59,12 @@ const fields = new Set([
   "strict",
   "timeoutMs",
   "session",
+  "plugins",
 ]);
 const namePattern = /^[A-Za-z][A-Za-z0-9_.-]{0,127}$/;
+const pluginIdPattern =
+  /^[a-z0-9][a-z0-9._-]{0,127}\/[a-z0-9][a-z0-9._-]{0,127}$/;
+const pluginRevisionPattern = /^(?:[0-9a-f]{40}|[0-9a-f]{64})$/;
 
 function record(value: unknown, label: string): Record<string, unknown> {
   if (
@@ -62,6 +75,45 @@ function record(value: unknown, label: string): Record<string, unknown> {
   )
     throw new Error(`${label} must be an object`);
   return value as Record<string, unknown>;
+}
+
+/** Validate and freeze exact references without reading or installing plugins. */
+export function parsePluginReferences(
+  value: unknown,
+  label = "Plugins",
+): readonly PluginReference[] {
+  if (!Array.isArray(value) || value.length > 256)
+    throw new Error(`${label} must be an array of at most 256 references`);
+  const result: PluginReference[] = [],
+    ids = new Set<string>();
+  for (const entry of value) {
+    const input = record(entry, `${label} reference`);
+    for (const key of Object.keys(input))
+      if (key !== "id" && key !== "revision")
+        throw new Error(`Unknown ${label} reference field: ${key}`);
+    if (
+      !Object.hasOwn(input, "id") ||
+      typeof input.id !== "string" ||
+      input.id.match(pluginIdPattern)?.[0] !== input.id
+    )
+      throw new Error(
+        `${label} reference id must be marketplace/plugin with two lowercase 1-128 character slugs`,
+      );
+    if (
+      !Object.hasOwn(input, "revision") ||
+      typeof input.revision !== "string" ||
+      input.revision.match(pluginRevisionPattern)?.[0] !== input.revision
+    )
+      throw new Error(
+        `${label} reference revision must be an exact lowercase 40 or 64 character SHA`,
+      );
+    if (ids.has(input.id))
+      throw new Error(`${label} contain duplicate plugin id ${input.id}`);
+    ids.add(input.id);
+    result.push(Object.freeze({ id: input.id, revision: input.revision }));
+  }
+  result.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  return Object.freeze(result);
 }
 
 /** Reject unknown fields and ambiguous values before rendering or dispatch. */
@@ -132,6 +184,8 @@ function parseIntent(
       [...input.tools].sort(),
     ) as unknown as string[];
   }
+  if (input.plugins !== undefined)
+    result.plugins = parsePluginReferences(input.plugins, "Profile plugins");
   if (complete && result.strict && result.tools === undefined)
     throw new Error(
       "Strict profile requires an explicit tools array; [] means no tools",
@@ -194,7 +248,23 @@ export class ResolvedProfile {
       ...(caps.tools === undefined
         ? {}
         : { tools: Object.freeze([...caps.tools].sort()) }),
+      ...(caps.activePlugins === undefined
+        ? {}
+        : {
+            activePlugins: parsePluginReferences(
+              caps.activePlugins,
+              "Target active plugins",
+            ),
+          }),
     });
+    if (intent.plugins !== undefined) {
+      if (this.capabilities.activePlugins === undefined)
+        throw new Error("Target active plugin inventory is unknown");
+      if (hash(intent.plugins) !== hash(this.capabilities.activePlugins))
+        throw new Error(
+          "Target active plugins do not match the exact profile selection; use a preconfigured binding",
+        );
+    }
     this.instructionChannel = intent.instructionsChannel ?? "prompt-prefix";
     if (
       this.instructionChannel === "native-system" &&
