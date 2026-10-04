@@ -47,8 +47,8 @@ const id = (x: unknown): x is string =>
   /^[a-zA-Z0-9_.-]{1,100}$/.test(x) &&
   x !== "." &&
   x !== "..";
-function bound(x: unknown, max: number, label: string): void {
-  if (!Number.isSafeInteger(x) || Number(x) < 1 || Number(x) > max)
+function bound(x: unknown, max: number, label: string, min = 1): void {
+  if (!Number.isSafeInteger(x) || Number(x) < min || Number(x) > max)
     throw new Error(`${label}: invalid finite bound`);
 }
 export function parseDocument(
@@ -104,6 +104,8 @@ export function parseDocument(
 }
 function schemaCheck(schema: unknown, label: string): Schema {
   const s = record(schema, label);
+  if (Buffer.byteLength(JSON.stringify(s)) > 16 * 1024)
+    throw new Error(`${label}: schema exceeds 16 KiB`);
   const walk = (x: unknown): void => {
     if (x && typeof x === "object") {
       for (const [k, v] of Object.entries(x)) {
