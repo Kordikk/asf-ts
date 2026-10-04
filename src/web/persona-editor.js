@@ -33,6 +33,8 @@ function createPersonaEditor(host) {
   const list = /** @type {HTMLSelectElement} */ (listElement);
   const namePattern = /^[A-Za-z][A-Za-z0-9_.-]{0,127}$/,
     revisionPattern = /^(?:[a-f0-9]{40}|[a-f0-9]{64})$/;
+  const emptyHint =
+    "Create a named persona, then assign it in workflow settings or an agent block.";
   let selected = "",
     confirmingDelete = "",
     pluginFilter = "",
@@ -417,11 +419,11 @@ function createPersonaEditor(host) {
       return;
     }
     if (!selected || !record(intent)) {
-      message(
-        "Create a named persona, then assign it in workflow settings or an agent block.",
-      );
+      message(emptyHint);
       return;
     }
+    if (element("studio-persona-message").textContent === emptyHint)
+      message("");
     field(
       "instructions",
       intent,
