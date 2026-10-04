@@ -166,10 +166,22 @@ export function renderDocument(raw: WorkflowDocument): string {
       );
     }
     offset += Math.ceil(w.nodes.length / 3) * 115 + 70;
-    for (const n of w.nodes)
-      details(`${name} / ${n.id} · declared node contract`, n);
+    for (const n of w.nodes) {
+      const defaults =
+        n.kind === "workflow"
+          ? { attempt: 1, maxDispatches: null, timeoutMs: 300000 }
+          : n.kind === "command"
+            ? { timeoutMs: 60000 }
+            : n.kind === "agent"
+              ? { corrections: 0 }
+              : {};
+      details(`${name} / ${n.id} · declared node contract`, {
+        ...defaults,
+        ...n,
+      });
+    }
   }
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1020" height="${offset + 50}" role="img" aria-label="Declared workflow graph and contracts"><style>text{font:13px sans-serif;fill:#20304a}.heading{font-size:19px}.contract{font:12px monospace}rect{fill:#eef3ff;stroke:#7e94b5}path{fill:none;stroke:#7e94b5}</style><defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0L8 4L0 8Z"/></marker></defs><text x="20" y="25">ASF-TS ${identity}</text>${sections.join("")}<text x="20" y="${offset + 20}">Declared contracts only. Execution and resume require recipient preflight.</text></svg>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1020" height="${offset + 50}" role="img" aria-label="Declared workflow graph and contracts"><style>text{font:13px sans-serif;fill:#20304a}.heading{font-size:19px}.contract{font:12px monospace}rect{fill:#eef3ff;stroke:#7e94b5}path{fill:none;stroke:#7e94b5}</style><defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0L8 4L0 8Z"/></marker></defs><text x="20" y="25">ASF-TS ${identity}</text>${sections.join("")}<text x="20" y="${offset + 20}">Declared defaults; ancestors can reduce limits. Execution requires recipient preflight.</text></svg>`;
   if (Buffer.byteLength(svg) > 4 * DOCUMENT_LIMIT)
     throw new Error("Rendered artifact exceeds 4 MiB");
   return svg;

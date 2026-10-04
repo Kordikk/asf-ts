@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { encode } from "../util.js";
-/** Format v1: JSON primitives, UTF-16 code-unit key order, array order retained. */
+/** Format v1: JSON integer-index order, other keys in UTF-16 order; arrays retained. */
 export function portableCanonical(
   value: unknown,
   limit = 8 * 1024 * 1024,

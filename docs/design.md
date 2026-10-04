@@ -37,7 +37,7 @@ Workflow authors supply an identity that changes when relevant workflow code/dep
 
 ## Storage and resume
 
-One shared database, default `.asf/store.db`, holds runs, actions, invocations, sessions, reports, final ledger, budgets, and events. SQLite WAL + `synchronous=FULL`; Node's built-in SQLite is experimental in Node 22. No ORM or external database process. Schema `user_version=1`, unknown versions rejected. This first release has no historical migrations.
+One shared database, default `.asf/store.db`, holds runs, actions, invocations, sessions, reports, final ledger, budgets, and events. SQLite WAL + `synchronous=FULL`; Node's built-in SQLite is experimental in Node 22. No ORM or external database process. Schema `user_version=1`, unknown versions rejected. Historical v1 records remain intact. The extended runtime adds workflow tables without rewriting them; see [ADR 0212](adr/0212-local-actions-and-storage-compatibility.md).
 
 1. Claim the run atomically using PID plus random owner token. A live PID blocks another executor, even after PID reuse. A dead PID can be reclaimed, but outstanding reservations become **uncertain**. Local machine only: do not share this store across hosts/NFS or PID namespaces.
 2. Check stable action request identity: prompt/context/schema, config/protocol/policy binding, session handle, and bounds. A changed action is rejected before dispatch. Completed actions return stored results and emit only a replay observation.
