@@ -728,7 +728,7 @@ function studioRenderGraph() {
       : block.profile
         ? `Profile: ${block.profile}`
         : block.kind === "parallel"
-          ? `${block.join ?? "all"} join · ${studioBranches(block).length} children`
+          ? `${block.join ?? "all"} join · ${studioBranches(block).length} ${studioBranches(block).length === 1 ? "child" : "children"}`
           : block.kind === "branch"
             ? "Choose true or false"
             : block.kind === "end"
