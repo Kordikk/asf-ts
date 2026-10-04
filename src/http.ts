@@ -1,9 +1,81 @@
-import { createServer, type Server } from "node:http";
+import {
+  createServer,
+  type IncomingMessage,
+  type Server,
+  type ServerResponse,
+} from "node:http";
 import { readFileSync } from "node:fs";
 
 import { Store } from "./store.js";
 import { errorText } from "./util.js";
-/** Local read-only inspection; clients poll SQLite independently, never provider drains. */
+
+const STUDIO_BODY_LIMIT = 1024 * 1024;
+
+async function validateStudio(
+  req: IncomingMessage,
+  res: ServerResponse,
+): Promise<void> {
+  if (
+    req.headers["content-type"]?.split(";", 1)[0]?.toLowerCase() !==
+    "application/json"
+  ) {
+    res.writeHead(415).end("Studio requires application/json");
+    return;
+  }
+  try {
+    const body = await new Promise<string>((resolve, reject) => {
+      const chunks: Buffer[] = [];
+      let bytes = 0,
+        settled = false;
+      req.on("data", (chunk: Buffer) => {
+        if (settled) return;
+        bytes += chunk.length;
+        if (bytes > STUDIO_BODY_LIMIT) {
+          settled = true;
+          reject(new Error("Studio request exceeds 1 MiB"));
+          return;
+        }
+        chunks.push(chunk);
+      });
+      req.once("end", () => {
+        if (!settled) {
+          settled = true;
+          resolve(Buffer.concat(chunks).toString("utf8"));
+        }
+      });
+      req.once("error", reject);
+      req.once("aborted", () => reject(new Error("Studio request aborted")));
+    });
+    const payload: unknown = JSON.parse(body);
+    if (
+      !payload ||
+      typeof payload !== "object" ||
+      Array.isArray(payload) ||
+      Object.keys(payload).length !== 1 ||
+      !("source" in payload) ||
+      typeof payload.source !== "string"
+    )
+      throw new Error("Studio validation requires only a source string");
+    const { parseDocument, validateDocument, serializeDocument } =
+      await import("./portable/validation.js");
+    const { NODE_CATALOGUE } = await import("./portable/model.js");
+    const result = validateDocument(parseDocument(payload.source));
+    res.setHeader("Content-Type", "application/json");
+    res.end(
+      JSON.stringify({
+        ...result,
+        catalogue: NODE_CATALOGUE,
+        yaml: serializeDocument(result.document, "yaml"),
+      }),
+    );
+  } catch (error) {
+    res.setHeader("Content-Type", "application/json");
+    res
+      .writeHead(errorText(error).includes("exceeds 1 MiB") ? 413 : 400)
+      .end(JSON.stringify({ error: errorText(error) }));
+  }
+}
+/** Local inspection and data authoring; clients never drain provider streams. */
 export async function serve(store: Store, port = 0): Promise<Server> {
   // Explicit allowlist, resolved relative to this module for source and dist.
   const assets = new Map(
@@ -12,6 +84,9 @@ export async function serve(store: Store, port = 0): Promise<Server> {
       ["/flow-model.js", "flow-model.js", "text/javascript; charset=utf-8"],
       ["/ui.js", "ui.js", "text/javascript; charset=utf-8"],
       ["/ui.css", "ui.css", "text/css; charset=utf-8"],
+      ["/studio", "studio.html", "text/html; charset=utf-8"],
+      ["/studio.js", "studio.js", "text/javascript; charset=utf-8"],
+      ["/studio.css", "studio.css", "text/css; charset=utf-8"],
     ].map(([route, file, type]) => [
       route,
       {
@@ -29,15 +104,23 @@ export async function serve(store: Store, port = 0): Promise<Server> {
       "Content-Security-Policy",
       "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
     );
-    // No CORS, no remote bind, no mutation; deny browser cross-origin fetches.
+    // No CORS, remote bind, or run writes; deny browser cross-origin fetches.
     const host = req.headers.host ?? "";
+    const studioPost =
+      req.method === "POST" &&
+      (req.url ?? "/").split("?", 1)[0] === "/studio/validate";
     if (
-      req.method !== "GET" ||
-      req.headers.origin ||
+      (req.method !== "GET" && !studioPost) ||
+      (req.headers.origin &&
+        (!studioPost || req.headers.origin !== `http://${host}`)) ||
       !/^(127\.0\.0\.1|localhost):[0-9]+$/.test(host) ||
       req.headers["sec-fetch-site"] === "cross-site"
     ) {
       res.writeHead(403).end();
+      return;
+    }
+    if (studioPost) {
+      void validateStudio(req, res);
       return;
     }
     try {
