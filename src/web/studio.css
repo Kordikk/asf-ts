@@ -742,3 +742,19 @@
     padding: 14px;
   }
 }
+
+.studio-persona-plugin-list {
+  max-height: 260px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-color: #334964 #101927;
+}
+#studio-persona-dialog .persona-inventory label {
+  overflow-wrap: anywhere;
+}
+#studio-persona-dialog .persona-selected-plugins {
+  padding-left: 20px;
+  color: var(--ink);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
