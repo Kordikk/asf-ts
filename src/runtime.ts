@@ -849,7 +849,7 @@ export class Runtime {
           0,
           {
             status: result.cancelled ? "cancelled" : "succeeded",
-            text: encode(result, 256 * 1024),
+            text: encode(result, 512 * 1024),
             accounting: { ...accounting, excluded: [] },
           },
           "command",
